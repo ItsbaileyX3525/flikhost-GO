@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -19,24 +22,105 @@ var dbPass string
 var websiteURL string
 var cookieSeure bool
 
-func validateImage(image *multipart.FileHeader) {
-	log.Printf("File name: %s", image.Filename)
+var validImageMimeTypes = []string{
+	"image/png",
+	"image/gif",
+	"image/jpeg",
+	"image/tiff",
+}
+
+func validateImage(image *multipart.FileHeader) (bool, string) {
+	if image.Size > 80000000 { //80MB
+		return false, "file too big"
+	}
+
+	var file multipart.File
+	var fileError error
+	file, fileError = image.Open()
+	if fileError != nil {
+		return false, "Error opening image data"
+	}
+	defer file.Close()
+
+	var buf []byte = make([]byte, 512)
+	var n int
+	var readError error
+	n, readError = file.Read(buf)
+	if readError != nil {
+		return false, "Error reading image data"
+	}
+
+	var mime string = http.DetectContentType(buf[:n])
+
+	if !slices.Contains(validImageMimeTypes, mime) {
+		return false, "Incorrect mime type"
+	}
+
+	return true, ""
+}
+
+func storeImage(image *multipart.FileHeader) (bool, string) {
+	var src multipart.File
+	var readError error
+	src, readError = image.Open()
+	if readError != nil {
+		return false, "Error opening image."
+	}
+	defer src.Close()
+
+	dst, err := os.Create(fmt.Sprintf("./images/%s", image.Filename))
+	if err != nil {
+		return false, "Unable to create source file."
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return false, "Failed to copy image contents."
+	}
+
+	return true, ""
 }
 
 func createEndpoints(router *gin.Engine) {
 	var api *gin.RouterGroup = router.Group("/api")
 	{
 		api.POST("/uploadImage", func(c *gin.Context) {
-			var fileError error
-			var file *multipart.FileHeader
-			file, fileError = c.FormFile("image")
+			const maxUploadSize int64 = 80 << 20 //80 MB
+
+			if c.Request.ContentLength > maxUploadSize {
+				c.JSON(200, gin.H{"status": "error", "message": "File too big"})
+				return
+			}
+
+			if err := c.Request.ParseMultipartForm(maxUploadSize); err != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Invalid multipart form"})
+				return
+			}
+
+			file, fileError := c.FormFile("image")
 			if fileError != nil {
 				log.Print("Image ain't an image tbh")
 				c.JSON(200, gin.H{"status": "error", "message": "Not an image"})
+				return
 			}
-			validateImage(file)
+			var errorMsg string
+			var validated bool
+			validated, errorMsg = validateImage(file)
+			if !validated {
+				c.JSON(200, gin.H{"status": "error", "message": errorMsg})
+				return
+			}
 
-			c.JSON(200, gin.H{"status": "Success", "message": "File uploaded successfully!"})
+			var moveError string
+			var moved bool
+			moved, moveError = storeImage(file)
+
+			if !moved {
+				c.JSON(200, gin.H{"status": "error", "message": moveError})
+				return
+			}
+
+			c.JSON(200, gin.H{"status": "success", "message": "File uploaded successfully!"})
 		})
 	}
 }
