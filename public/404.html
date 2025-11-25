@@ -1,11 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Page not exist :(</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404</title>
+
+    <link rel="stylesheet" href="/assets/css/404.css">
 </head>
 <body>
-  Sorry but 404 - Not Found
+    <audio id="DOL" src="/assets/sounds/drums of liberation.mp3"></audio>
+    <div class="mainBox">
+        <div>
+            <h1>whoopsies!</h1>
+            <h2 id="BroJustStopLookingAtTheHTMLAndEnjoyTheWebsite">wrong page im afraid</h2>
+        </div>
+        <img src="" alt="should an be image here.." id="randGif">
+        <div>
+            <p style="margin-top: auto;">if you got here from a button on our website please email: <a href="mailto:help@flik.host">help@flik.host</a></p>
+            <p>..unless you pesky human is manually typing urls</p><br>
+            <p id="ToeiIsBetter">Like Toei Animation instead? <a href="#" id="changeGif">Click here to change gifs.</a></p>
+        </div>
+        <div style="margin-top: auto; width: 100%;">
+            <a href="/" id="return-href"></a><!--Chat... Does this even make sense?-->
+            <button onclick="document.getElementById('return-href').click()">take me back!</button>
+        </div>
+    </div>
+    
+<script>
+const image_array_ghibli = [
+    'ghibli-1.gif',
+    'ghibli-2.gif',
+    'ghibli-3.gif',
+    'ghibli-4.gif',
+    'ghibli-5.gif',
+    'ghibli-6.gif',
+    'ghibli-7.gif',
+    'ghibli-8.gif'
+];
+
+const image_array_toei = [
+    'toei-1.gif',
+    'toei-2.gif',
+    'toei-3.gif',
+    'toei-4.gif',
+    'toei-5.gif',
+    'toei-6.gif',
+    'toei-7.gif',
+    'toei-8.gif',
+    'toei-9.gif',
+];
+
+let canActivateDOL = false;
+let studio = localStorage.getItem("chosenStudio") || "ghibli";
+const studioChangeText = document.getElementById("ToeiIsBetter");
+if(studio == "ghibli"){
+    const random_index = Math.floor(Math.random() * image_array_ghibli.length);
+    const selected_image = image_array_ghibli[random_index];
+    document.getElementById('randGif').src = `/assets/images/ghibli/${selected_image}`;
+    studioChangeText.innerHTML = "Like Toei Animation instead? <a href=\"#\" id=\"changeGif\">Click here to change gifs.</a>";
+}else{
+    const random_index = Math.floor(Math.random() * image_array_toei.length);
+    const selected_image = image_array_toei[random_index];
+    if (random_index == 0 || random_index == 8){
+        canActivateDOL = true;
+    }else if (random_index == 7){
+        document.getElementById('BroJustStopLookingAtTheHTMLAndEnjoyTheWebsite').innerHTML = "Well it seems nothing happened here..";
+    }
+    document.getElementById('randGif').src = `/assets/images/toei/${selected_image}`;
+    studioChangeText.innerHTML = "Like Studio Ghibli instead? <a href=\"#\" id=\"changeGif\">Click here to change gifs.</a>";
+
+}
+document.getElementById("changeGif").addEventListener("click", (e) => {
+    if(studio == "ghibli"){
+        studio = "toei";
+        localStorage.setItem("chosenStudio", "toei");
+    }else{
+        studio = "ghibli";
+        localStorage.setItem("chosenStudio", "ghibli");
+    }
+    location.reload();
+})
+
+document.addEventListener("mousedown", (e) => {
+    if (canActivateDOL) {
+        const audio = document.getElementById("DOL");
+        audio.play();
+        audio.loop = true;
+        audio.volume = 0.2;
+    }
+});
+document.addEventListener("keydown", (e) => {
+    if (canActivateDOL) {
+        const audio = document.getElementById("DOL");
+        audio.play();
+        audio.loop = true;
+        audio.volume = 0.2;
+    }
+});
+
+</script>
 </body>
 </html>
