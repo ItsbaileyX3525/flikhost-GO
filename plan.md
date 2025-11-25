@@ -6,9 +6,9 @@ I think to get started it would be a good idea to create the html website, not s
 
 So to start that I need to create a webservice with GIN probably so i can serve the files
 
-- [ ] Install GIN
-- [ ] Serve static files
-- [ ] Handle assets
+- [x] Install GIN
+- [x] Serve static files
+- [x] Handle assets
 - [ ] Develop basic html webpages
 - [ ] Create endpoints
 
