@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -21,6 +23,7 @@ var dbUser string
 var dbPass string
 var websiteURL string
 var cookieSeure bool
+var secretTurnstileToken string
 
 var validImageMimeTypes = []string{
 	"image/png",
@@ -81,11 +84,38 @@ func storeImage(image *multipart.FileHeader) (bool, string) {
 	return true, ""
 }
 
+func checkTurnstile(token string) (bool, string) {
+	var payload map[string]string = map[string]string{
+		"secret":   secretTurnstileToken,
+		"response": token,
+	}
+	jsonData, _ := json.Marshal(payload)
+	resp, err := http.Post("https://challenges.cloudflare.com/turnstile/v0/siteverify", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return false, err.Error()
+	}
+	defer resp.Body.Close()
+
+	return true, ""
+}
+
 func createEndpoints(router *gin.Engine) {
 	var api *gin.RouterGroup = router.Group("/api")
 	{
 		api.POST("/uploadImage", func(c *gin.Context) {
-			const maxUploadSize int64 = 80 << 20 //80 MB
+			type SubmitBody struct {
+				Token string `form:"token"`
+				Image *multipart.FileHeader
+			}
+
+			var body SubmitBody
+
+			if err := c.ShouldBind(&body); err != nil {
+				c.JSON(400, gin.H{"status": "error", "message": "Invalid form fields"})
+				return
+			}
+
+			const maxUploadSize int64 = 51 << 20 //51 MB (1mb for turnstile token)
 
 			if c.Request.ContentLength > maxUploadSize {
 				c.JSON(200, gin.H{"status": "error", "message": "File too big"})
@@ -94,6 +124,21 @@ func createEndpoints(router *gin.Engine) {
 
 			if err := c.Request.ParseMultipartForm(maxUploadSize); err != nil {
 				c.JSON(200, gin.H{"status": "error", "message": "Invalid multipart form"})
+				return
+			}
+
+			var token string = body.Token
+
+			var passedTurnstile bool = false
+			var turnstileError string = ""
+			passedTurnstile, turnstileError = checkTurnstile(token)
+			if !passedTurnstile {
+				c.JSON(200, gin.H{"status": "error", "message": "Invalid turnstile."})
+				return
+			}
+
+			if turnstileError != "" {
+				c.JSON(200, gin.H{"status": "error", "message": turnstileError})
 				return
 			}
 
@@ -120,7 +165,11 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
-			c.JSON(200, gin.H{"status": "success", "message": "File uploaded successfully!"})
+			c.JSON(200, gin.H{"status": "success", "message": "Image uploaded successfully!"})
+		})
+
+		api.POST("/handleFile", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "success", "message": "File stored successfully"})
 		})
 	}
 }
@@ -169,6 +218,7 @@ func main() {
 	dbUser = os.Getenv("DBUSER")
 	dbPass = os.Getenv("DBPASS")
 	websiteURL = os.Getenv("WEBSITEURL")
+	secretTurnstileToken = os.Getenv("turnstileKey")
 	var PORT string = os.Getenv("PORT")
 	var cookieSeureString string = os.Getenv("SECURE")
 	var boolParseError error
@@ -179,6 +229,13 @@ func main() {
 
 	//gin.SetMode(gin.ReleaseMode) //Uncomment in prod
 	var router *gin.Engine = gin.Default()
+
+	router.Use(func(c *gin.Context) {
+		if c.Request.Host != fmt.Sprintf("localhost:%d", PORT) {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid host header"})
+			return
+		}
+	})
 
 	createEndpoints(router)
 	serveHTML(router)

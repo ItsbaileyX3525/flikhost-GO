@@ -4,14 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Landing page</title>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cloudflare.com https://challenges.cloudflare.com https://challenges.cloudflare.com/turnstile/ https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/ov2/av0/rch/dntbv/0x4AAAAAACDFfOKm7uvwfqiR/auto/fbE/new/flexible">
   <link rel="icon" href="/assets/images/favicon.png" type="image/png">
   <link rel="stylesheet" href="/assets/css/index.css">
-  <script type="module" src="/assets/js/index.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
   <form id="image-form">
-    <input type="file" name="image" id="imageUpload" enctype="multipart/form-data" accept="image/png">
+    <input type="file" name="image" id="imageUpload" enctype="multipart/form-data" accept="image/png" required>
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAACDFfOKm7uvwfqiR"
+    data-theme="auto"
+    data-callback="onTurnstileSuccess"
+    data-error-callback="onTurnstileError"
+    data-expired-callback="onTurnstileExpired"></div>
     <button type="submit">SUBMIT</button>
   </form>
 </body>
+<script src="/assets/js/index.js"></script>
 </html>
