@@ -1,3 +1,6 @@
 .env
 flikhost.exe
-images/
+images/*
+!images/blank.txt
+files/*
+!files/blank.txt

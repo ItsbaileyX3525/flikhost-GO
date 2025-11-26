@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Landing page</title>
+  <title>File upload</title>
   <link rel="icon" href="/assets/images/favicon.png" type="image/png">
   <link rel="stylesheet" href="/assets/css/index.css">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
-  <form id="image-form">
-    <input type="file" name="image" id="imageUpload" enctype="multipart/form-data" accept="image/png" required>
+  <form type="file" id="image-form">
+    <input type="file" name="file" id="fileUpload" enctype="multipart/form-data" required>
     <div class="cf-turnstile" data-sitekey="0x4AAAAAACDFfOKm7uvwfqiR"
     data-theme="auto"
     data-callback="onTurnstileSuccess"
@@ -19,6 +19,5 @@
     <button type="submit">SUBMIT</button>
   </form>
 </body>
-<script src="/assets/js/index.js"></script>
 <script src="/assets/js/fileUpload.js"></script>
 </html>
