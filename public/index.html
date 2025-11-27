@@ -6,16 +6,12 @@
   <title>Landing page</title>
   <link rel="icon" href="/assets/images/favicon.png" type="image/png">
   <link rel="stylesheet" href="/assets/css/index.css">
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit" async defer></script>
 </head>
 <body>
-  <form id="image-form">
+  <form id="upload-form">
     <input type="file" name="image" id="imageUpload" enctype="multipart/form-data" accept="image/png" required>
-    <div class="cf-turnstile" data-sitekey="0x4AAAAAACDFfOKm7uvwfqiR"
-    data-theme="auto"
-    data-callback="onTurnstileSuccess"
-    data-error-callback="onTurnstileError"
-    data-expired-callback="onTurnstileExpired"></div>
+    <div id="turnstile-container"></div>
     <button type="submit">SUBMIT</button>
   </form>
 </body>

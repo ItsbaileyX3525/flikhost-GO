@@ -6,16 +6,12 @@
   <title>File upload</title>
   <link rel="icon" href="/assets/images/favicon.png" type="image/png">
   <link rel="stylesheet" href="/assets/css/index.css">
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit" async defer></script>
 </head>
 <body>
-  <form type="file" id="image-form">
+  <form type="file" id="upload-form">
     <input type="file" name="file" id="fileUpload" enctype="multipart/form-data" required>
-    <div class="cf-turnstile" data-sitekey="0x4AAAAAACDFfOKm7uvwfqiR"
-    data-theme="auto"
-    data-callback="onTurnstileSuccess"
-    data-error-callback="onTurnstileError"
-    data-expired-callback="onTurnstileExpired"></div>
+    <div id="turnstile-container"></div>
     <button type="submit">SUBMIT</button>
   </form>
 </body>

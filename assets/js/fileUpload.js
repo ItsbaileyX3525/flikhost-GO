@@ -1,48 +1,50 @@
-const form = document.getElementById("image-form")
+const form = document.getElementById("upload-form")
 let turnstileToken = ""
+let widgetID = null
 
 form.addEventListener("submit", async (e) => {
-    e.preventDefault()
+	e.preventDefault()
 
-    var URL = "/api/uploadImage"
-    console.log(form.getAttribute("type"))
+	let URL = "/api/uploadImage"
 
-    if (form.getAttribute("type") === "file") {
-        URL = "/api/uploadFile"
-        console.log("File upload")
-    }
+	const input = document.getElementById("imageUpload")
+	if (input && input.getAttribute("accept") !== "image/png") {
+		URL = "/api/uploadFile"
+	}
 
-    if (!turnstileToken) {
-        console.log("Waiting for turnstile verif")
-        return
-    }
+	if (!turnstileToken) {
+		console.log("Waiting for turnstile verification")
+		return
+	}
 
-    const formData = new FormData(form)
-    formData.append("token", turnstileToken)
+	const formData = new FormData(form)
+	formData.append("token", turnstileToken)
 
-    const resp = await fetch(URL, {
-        method: "POST",
-        body: formData
-    })
+	const resp = await fetch(URL, {
+		method: "POST",
+		body: formData
+	})
 
-    if (!resp.ok) {
-        console.log("Something went wrong")
-        return
-    }
+	if (!resp.ok) {
+		turnstileToken = ""
+		turnstile.reset(widgetID)
+		return
+	}
 
-    const data = await resp.json()
+	const data = await resp.json()
+	console.log(data)
+	console.log(data.message)
 
-    console.log(data)
-    console.log(data.message)
+	turnstileToken = ""
+	turnstile.reset(widgetID)
 })
 
-  function onTurnstileSuccess(token) {
-    console.log("Turnstile success:", token);
-    turnstileToken = token
-  }
-  function onTurnstileError(errorCode) {
-    console.error("Turnstile error:", errorCode);
-  }
-  function onTurnstileExpired() {
-    console.warn("Turnstile token expired");
-  }
+window.onloadTurnstileCallback = function () {
+	widgetID = turnstile.render("#turnstile-container", {
+		sitekey: "0x4AAAAAACDFfOKm7uvwfqiR",
+		callback: function (token) {
+			turnstileToken = token
+		}
+	})
+
+}
