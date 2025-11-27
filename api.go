@@ -383,5 +383,9 @@ func createEndpoints(router *gin.Engine) {
 
 			c.JSON(200, info)
 		})
+
+		api.POST("/validateKey", validateKeyHandler)
+		api.POST("/deleteImage", deleteImageHandler)
+		api.GET("/proxy", proxyHandler)
 	}
 }

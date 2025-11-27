@@ -14,6 +14,7 @@ import (
 var dbName string
 var dbUser string
 var dbPass string
+var validationKey string
 var websiteURL string
 var cookieSeure bool
 var secretTurnstileToken string
@@ -28,6 +29,7 @@ func main() {
 	dbUser = os.Getenv("DBUSER")
 	dbPass = os.Getenv("DBPASS")
 	websiteURL = os.Getenv("WEBSITEURL")
+	validationKey = os.Getenv("VALIDATIONKEY")
 	secretTurnstileToken = os.Getenv("turnstileKey")
 	var PORT string = os.Getenv("PORT")
 	var cookieSeureString string = os.Getenv("SECURE")
