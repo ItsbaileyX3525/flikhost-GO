@@ -4,11 +4,13 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"hash"
 	"io"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
@@ -327,6 +329,59 @@ func createEndpoints(router *gin.Engine) {
 		})
 		api.GET("/createAccount", func(c *gin.Context) {
 			c.File("./dev/youlittleshnitzel.html")
+		})
+
+		api.GET("/info", func(c *gin.Context) {
+			ipAddress := c.GetHeader("CF-Connecting-IP")
+			if ipAddress == "" {
+				ipAddress = c.Query("testIP")
+				if ipAddress == "" {
+					ipAddress = c.ClientIP()
+				}
+			}
+
+			userAgent := c.GetHeader("User-Agent")
+
+			if ipAddress == "::1" || ipAddress == "127.0.0.1" {
+				c.JSON(200, gin.H{
+					"address": ipAddress,
+					"country": "Local",
+					"city":    "Local",
+					"region":  "Local",
+					"isp":     "Local",
+					"loc":     "0,0",
+					"post":    "Local",
+					"ua":      userAgent,
+				})
+				return
+			}
+
+			accessToken := "b017e2178303a1"
+			resp, err := http.Get(fmt.Sprintf("https://ipinfo.io/%s?token=%s", ipAddress, accessToken))
+			if err != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Failed to fetch IP info"})
+				return
+			}
+			defer resp.Body.Close()
+
+			var ipinfoData map[string]interface{}
+			if err := json.NewDecoder(resp.Body).Decode(&ipinfoData); err != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Failed to parse IP info"})
+				return
+			}
+
+			info := gin.H{
+				"address": ipAddress,
+				"country": ipinfoData["country"],
+				"city":    ipinfoData["city"],
+				"region":  ipinfoData["region"],
+				"isp":     ipinfoData["org"],
+				"loc":     ipinfoData["loc"],
+				"post":    ipinfoData["postal"],
+				"ua":      userAgent,
+			}
+
+			c.JSON(200, info)
 		})
 	}
 }
