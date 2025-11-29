@@ -77,33 +77,21 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
-			var ext = filepath.Ext(file.Filename)
-			file.Filename = fmt.Sprintf("%s%s", randomiseName(), ext)
-
-			var moveError string
-			var moved bool
 			var fileOpen multipart.File
-			moved, moveError, fileOpen = storeImage(file)
-
-			if !moved {
-				c.JSON(200, gin.H{"status": "error", "message": moveError})
+			fileOpen, err = file.Open()
+			if err != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Error opening file"})
 				return
 			}
+			defer fileOpen.Close()
 
 			var hasher hash.Hash = sha256.New()
-
 			if _, err = io.Copy(hasher, fileOpen); err != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Error hashing file"})
 				return
 			}
-
 			var hashBytes []byte = hasher.Sum(nil)
-
 			var hashString string = hex.EncodeToString(hashBytes)
-
-			var sessionID string = ""
-			sessionID, _ = c.Cookie("session_id")
-
-			log.Printf("Session ID: %s", sessionID)
 
 			var db *gorm.DB
 			var dbErr error
@@ -112,22 +100,23 @@ func createEndpoints(router *gin.Engine) {
 				c.JSON(500, gin.H{"status": "error", "message": "Error connecting to the database"})
 				return
 			}
-			var scanErr error
-			var userID interface{}
 
-			var fileName string
-			var filePath string
+			var existingFileName string
+			var existingFilePath string
 			var fileHashScan *sql.Row = db.Raw(
 				"SELECT fileName, filePath FROM imageuploads where fileHash = ?",
 				hashString,
 			).Row()
 
-			scanErr = fileHashScan.Scan(&fileName, &filePath)
+			var scanErr error
+			scanErr = fileHashScan.Scan(&existingFileName, &existingFilePath)
 			if scanErr == nil {
+				var fileID string = hashString[:8]
 				c.JSON(200, gin.H{
 					"status":  "success",
 					"message": "File already exists",
-					"path":    filePath,
+					"path":    existingFilePath,
+					"fileID":  fileID,
 				})
 				return
 			}
@@ -140,6 +129,22 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
+			var ext = filepath.Ext(file.Filename)
+			file.Filename = fmt.Sprintf("%s%s", randomiseName(), ext)
+
+			var moveError string
+			var moved bool
+			moved, moveError = storeImageFromHeader(file)
+			if !moved {
+				c.JSON(200, gin.H{"status": "error", "message": moveError})
+				return
+			}
+
+			var sessionID string = ""
+			sessionID, _ = c.Cookie("session_id")
+			log.Printf("Session ID: %s", sessionID)
+
+			var userID interface{}
 			if sessionID != "" {
 
 				var row *sql.Row = db.Raw(
@@ -162,7 +167,7 @@ func createEndpoints(router *gin.Engine) {
 				file.Filename,
 				file.Size,
 				mime,
-				fmt.Sprintf("/files/%s", file.Filename),
+				fmt.Sprintf("/images/%s", file.Filename),
 				1,
 				hashString,
 			)
@@ -175,7 +180,7 @@ func createEndpoints(router *gin.Engine) {
 			c.JSON(200, gin.H{
 				"status":  "success",
 				"message": "Image uploaded successfully!",
-				"path":    fmt.Sprintf("/files/%s", file.Filename),
+				"path":    fmt.Sprintf("/images/%s", file.Filename),
 				"fileID":  fileID,
 			})
 		})
@@ -223,6 +228,7 @@ func createEndpoints(router *gin.Engine) {
 			file, check = c.FormFile("file")
 			if check != nil {
 				c.JSON(200, gin.H{"status": "error", "message": "File aint a file tbh."})
+				return
 			}
 			var validated bool
 			var errorMsg string
@@ -232,37 +238,21 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
-			var ext = filepath.Ext(file.Filename)
-			file.Filename = fmt.Sprintf("%s%s", randomiseName(), ext)
-
-			var moveError string
-			var moved bool
 			var fileOpen multipart.File
-
-			moved, moveError, fileOpen = storeFile(file)
-
-			if !moved {
-				c.JSON(200, gin.H{"status": "error", "message": moveError})
+			fileOpen, check = file.Open()
+			if check != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Error opening file"})
 				return
 			}
+			defer fileOpen.Close()
 
 			var hasher hash.Hash = sha256.New()
-
 			if _, check = io.Copy(hasher, fileOpen); check != nil {
-				c.JSON(200, gin.H{"status": "error", "message": "error reading file hash"})
+				c.JSON(200, gin.H{"status": "error", "message": "Error hashing file"})
 				return
 			}
-
 			var hashBytes []byte = hasher.Sum(nil)
-
 			var hashString string = hex.EncodeToString(hashBytes)
-
-			//Store all the shit in the database now
-
-			var sessionID string = ""
-			sessionID, _ = c.Cookie("session_id")
-
-			log.Printf("Session ID: %s", sessionID)
 
 			var db *gorm.DB
 			var dbErr error
@@ -271,22 +261,21 @@ func createEndpoints(router *gin.Engine) {
 				c.JSON(500, gin.H{"status": "error", "message": "Error connecting to the database"})
 				return
 			}
-			var scanErr error
-			var userID interface{}
 
-			var fileName string
-			var filePath string
+			var existingFileName string
+			var existingFilePath string
 			var fileHashScan *sql.Row = db.Raw(
 				"SELECT fileName, filePath FROM fileuploads where fileHash = ?",
 				hashString,
 			).Row()
 
-			scanErr = fileHashScan.Scan(&fileName, &filePath)
+			var scanErr error
+			scanErr = fileHashScan.Scan(&existingFileName, &existingFilePath)
 			if scanErr == nil {
 				c.JSON(200, gin.H{
 					"status":  "success",
 					"message": "File already exists",
-					"path":    filePath,
+					"path":    existingFilePath,
 				})
 				return
 			}
@@ -299,6 +288,22 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
+			var ext = filepath.Ext(file.Filename)
+			file.Filename = fmt.Sprintf("%s%s", randomiseName(), ext)
+
+			var moveError string
+			var moved bool
+			moved, moveError = storeFileFromHeader(file)
+			if !moved {
+				c.JSON(200, gin.H{"status": "error", "message": moveError})
+				return
+			}
+
+			var sessionID string = ""
+			sessionID, _ = c.Cookie("session_id")
+			log.Printf("Session ID: %s", sessionID)
+
+			var userID interface{}
 			if sessionID != "" {
 
 				var row *sql.Row = db.Raw(

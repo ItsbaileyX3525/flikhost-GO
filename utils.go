@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -153,6 +154,26 @@ func storeImage(image *multipart.FileHeader) (bool, string, multipart.File) {
 	return true, "", src
 }
 
+func storeImageFromHeader(image *multipart.FileHeader) (bool, string) {
+	src, err := image.Open()
+	if err != nil {
+		return false, "Error opening image."
+	}
+	defer src.Close()
+
+	dst, err := os.Create(fmt.Sprintf("./images/%s", image.Filename))
+	if err != nil {
+		return false, "Unable to create destination file."
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return false, "Failed to copy image contents."
+	}
+
+	return true, ""
+}
+
 func storeFile(file *multipart.FileHeader) (bool, string, multipart.File) {
 	var src multipart.File
 	var err error
@@ -174,6 +195,26 @@ func storeFile(file *multipart.FileHeader) (bool, string, multipart.File) {
 	}
 
 	return true, "", src
+}
+
+func storeFileFromHeader(file *multipart.FileHeader) (bool, string) {
+	src, err := file.Open()
+	if err != nil {
+		return false, "Error opening file contents"
+	}
+	defer src.Close()
+
+	dst, err := os.Create(fmt.Sprintf("./files/%s", file.Filename))
+	if err != nil {
+		return false, "Unable to allocate the file space."
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return false, "Failed to copy file."
+	}
+
+	return true, ""
 }
 
 func connectDB() (*gorm.DB, error) {
@@ -234,4 +275,26 @@ func serveHTML(router *gin.Engine) {
 			c.File("./public/404.html")
 		}
 	})
+}
+
+func serveFiles(router *gin.Engine) {
+	var files *gin.RouterGroup = router.Group("/files")
+	{
+		files.GET("/:id", func(c *gin.Context) {
+			var id string = c.Param("id")
+			c.File(fmt.Sprintf("./files/%s", id))
+			log.Printf("ID: %s", id)
+		})
+	}
+}
+
+func serveImages(router *gin.Engine) {
+	var images *gin.RouterGroup = router.Group("/images")
+	{
+		images.GET("/:id", func(c *gin.Context) {
+			var id string = c.Param("id")
+			c.File(fmt.Sprintf("./images/%s", id))
+			log.Printf("ID: %s", id)
+		})
+	}
 }

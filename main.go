@@ -57,6 +57,8 @@ func main() {
 	})
 
 	createEndpoints(router)
+	serveFiles(router)
+	serveImages(router)
 	serveHTML(router)
 
 	router.Static("/assets", "./assets")
