@@ -131,29 +131,6 @@ func randomiseName() string {
 
 }
 
-func storeImage(image *multipart.FileHeader) (bool, string, multipart.File) {
-	var src multipart.File
-	var err error
-	src, err = image.Open()
-	if err != nil {
-		return false, "Error opening image.", src
-	}
-	defer src.Close()
-
-	var dst *os.File
-	dst, err = os.Create(fmt.Sprintf("./images/%s", image.Filename))
-	if err != nil {
-		return false, "Unable to create source file.", src
-	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return false, "Failed to copy image contents.", src
-	}
-
-	return true, "", src
-}
-
 func storeImageFromHeader(image *multipart.FileHeader) (bool, string) {
 	src, err := image.Open()
 	if err != nil {
@@ -172,29 +149,6 @@ func storeImageFromHeader(image *multipart.FileHeader) (bool, string) {
 	}
 
 	return true, ""
-}
-
-func storeFile(file *multipart.FileHeader) (bool, string, multipart.File) {
-	var src multipart.File
-	var err error
-	src, err = file.Open()
-	if err != nil {
-		return false, "Error opening file contents", src
-	}
-	defer src.Close()
-
-	var dst *os.File
-	dst, err = os.Create(fmt.Sprintf("./files/%s", file.Filename))
-	if err != nil {
-		return false, "Unable to allocate the file space.", src
-	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return false, "Failed to copy file.", src
-	}
-
-	return true, "", src
 }
 
 func storeFileFromHeader(file *multipart.FileHeader) (bool, string) {

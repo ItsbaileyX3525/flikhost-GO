@@ -1,0 +1,177 @@
+<?php
+require("../includes/session.php");
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+if (isset($_SESSION['user_id'])) {
+    header('Location: home.php');
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign up - Flikhost</title>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script src="/assets/js/password.js" defer></script>
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+
+    <script src="/assets/js/notify.js"></script>
+    <link rel="stylesheet" href="/assets/css/notify.css">
+
+    <link rel="stylesheet" href="/assets/css/signup.css">
+    <link rel="stylesheet" href="/assets/css/checkbox.css">
+    <link rel="stylesheet" href="/assets/css/password.css">
+
+    
+</head>
+<body>
+    <div class="centered">
+        <div class="mainBox">
+            <div id="notif-container"></div>
+            <div class="innerContainer">
+                <div class="leftBox">
+                    <div class="innerLeft">
+                        <div>
+                            <h1>flikhost</h1>
+                            <p>Moments fade, images last</p>
+                        </div>
+                        <div class="backButton" onclick="location.href='/';">
+                            <button>return to site</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="rightBox">
+                    <div class="formContainer">
+                        <div style="padding-bottom: 58px; padding-top: 20px;">
+                            
+                            <h1 style="padding-bottom: 15px;">Create an account</h1>
+                            <span style="display: flex;"><p>Already have an account? &nbsp;</p><a href="login">Log in</a></span>
+                            
+                        </div>
+                        <form class="formInputs" action="" id="signupForm">
+                            <input type="hidden" id="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                            <div class="inputContainer">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" required placeholder="e.g. femboylover">
+                            </div>
+                            
+                            <div class="inputContainer">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" required placeholder="Email">
+                            </div>
+                            <div class="password-container inputContainer">
+                                <label for="password">Password</label>
+                                <div class="passwordWrap">
+                                    <input class="password-input" type="password" id="password" name="password" placeholder="e.g. s3curePassword123">
+                                    <div class="eye-icon" id="togglePassword">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="toc-container">
+                                <label class="checkbox-container">
+                                    <input id="TOSCheckbox" class="custom-checkbox" type="checkbox">
+                                    <span class="checkmark"></span>
+                                </label>
+                                <p class="text">I agree to the&nbsp;</p><a href="tos">Terms & Conditions</a>
+                                
+                            </div>
+                            <div id="ThisIsATurnstileWidget" data-theme="dark" class="cf-turnstile" data-sitekey="0x4AAAAAABCj8wt8gwneL-OU" data-callback="turnstileCallback" data-auto-render="false"></div>
+
+                            <div class="create-button">
+                                <button type="submit">Create account</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="response"></div>
+    <script>
+        let widgetId
+        let turnstileToken = "";
+        let validToken = false
+window.onload = function () {
+    widgetId = turnstile.render("#ThisIsATurnstileWidget", {
+        sitekey: "0x4AAAAAABCj8wt8gwneL-OU",
+        callback: function (token) {
+            turnstileToken = token;
+            validToken = true;
+        }
+    })
+};
+
+function reset_turnstile(){
+        turnstile.reset(widgetId)
+    }
+    $(document).ready(function() {
+    $('#signupForm').on('submit', function(event) {
+        event.preventDefault();
+
+        if(!validToken){
+            notify("Please verify you are a human", "error");
+            return;
+        }
+
+        if(!$("#TOSCheckbox").is(":checked")){
+            console.log("User needs to fucking uhhh agree to them doggurments!")
+            notify("Please agree to the ToS", "error");
+            return;
+        }
+
+        const csrfToken = $('#csrf_token').val();
+
+        const username = $('#username').val();
+        const email = $('#email').val();
+        const password = $('#password').val();
+
+        const data = {
+            csrf_token: csrfToken,
+            username: username,
+            email: email,
+            password: password,
+            token: turnstileToken
+        };
+
+        $.ajax({
+            url: '/includes/auth/signup-handler.php',
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                const result = JSON.parse(response);
+                if (result.success) {
+                    window.location.href = 'home';
+                } else {
+                    notify(result.message, "error");
+                    if(result.error_code == "0"){
+                        //This likely means that some data wasnt filled out
+                    }
+                    if (result.error_code == "1"){
+                        //Do code related to invalid username
+                    }
+                    if (result.error_code == "2"){
+                        //Do code related to invalid email
+                    }
+                    if (result.error_code == "3"){
+                        //Do code related to invalid password length
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+                alert('An error occurred, please try again.');
+            }
+        });
+        //We'll refresh the turnstile token in case the user inputs something wrong
+        reset_turnstile();
+    });
+});
+</script>
+</body>
+</html>

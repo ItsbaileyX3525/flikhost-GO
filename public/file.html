@@ -1,19 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>File upload</title>
-  <link rel="icon" href="/assets/images/favicon.png" type="image/png">
-  <link rel="stylesheet" href="/assets/css/index.css">
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit" async defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flikhost - File Upload</title>
+
+    <link rel="stylesheet" href="/assets/css/upload.css">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script src="/assets/js/notify.js" defer></script>
+    <link rel="stylesheet" href="/assets/css/notify.css">
 </head>
 <body>
-  <form type="file" id="upload-form">
-    <input type="file" name="file" id="fileUpload" enctype="multipart/form-data" required>
-    <div id="turnstile-container"></div>
-    <button type="submit">SUBMIT</button>
-  </form>
+    <div class="centered">
+        <div id="account-section" style="display: none;">
+            <div class="account">
+                <div>
+                    <p style='font-size: 16px;'>Logged in</p>
+                    <h2 id="username-display">@loading...</h2>
+                </div>
+                <div class="accountButton">
+                    <a href="/home" id="upload-href" style="display: none;"></a>
+                    <a href="/account" id="account-href" style="display: none;"></a>
+                    <br><button onclick="document.getElementById('upload-href').click();">my files</button>
+                    <button onclick="document.getElementById('account-href').click();">account</button>
+                </div>
+            </div>
+        </div>
+        <div class="mainBox">
+            <div id="notif-container"></div>
+            <div class="uploadContainer">
+                <div class="header">
+                    <h1>Upload file - 80MB cap</h1>
+                    <h4 style="margin-left: auto;">Or want to upload an image? <a href="/">Click here</a></h4>
+                </div>
+                <p>For more information on file types and sizes you can upload, <a href="/WhatCanIUpload">click here</a></p>
+                <div>
+                    <div id="dropZone" class="dropZone">
+                        <p id="dropZoneText">Drop a file or click here!</p>
+                        <p id="fileName" style="display: none; font-weight: bold;"></p>
+                    </div>
+                    <p id="replaceText" style="display: none;">Drag or click to change the file again</p>
+                </div>
+            </div>
+                
+            <form class="uploadForm" id="uploadForm" enctype="multipart/form-data">
+                <div id="turnstile-container" style="margin: auto;"></div>
+                <button type="submit">Upload</button>
+                <input type="file" name="fileUpload" id="fileUpload" style="display: none;">
+            </form>
+            <p style='margin-top: 10px; text-align: center;' id='createAccText'>
+                <a href='/signup'>Create an account</a> or <a href='/login'>log in</a> to gain control over your posts.
+            </p>
+        </div>
+        <div id="link-container" class="link-container" style="display: none; flex-direction: column; gap: 1.25rem;">
+            <div class="link-row">
+                <p class="label">Direct:</p>
+                <div class="link" id="link-direct">
+                    <p id="file-link-direct">Broken? email: help@flik.host</p>
+                </div>
+                <button id="copy-button-1" type="button">Copy link</button>
+            </div>
+        </div>
+    </div>
+    <div id="response"></div>
+    <script src="/assets/js/fileUpload.js"></script>
 </body>
-<script src="/assets/js/fileUpload.js"></script>
 </html>
