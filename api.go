@@ -140,7 +140,7 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
-			if sessionID != "" { //Has an account
+			if sessionID != "" {
 
 				var row *sql.Row = db.Raw(
 					"SELECT userID FROM sessions WHERE sessionID = ?",
@@ -156,7 +156,7 @@ func createEndpoints(router *gin.Engine) {
 				userID = nil
 			}
 
-			db.Exec(
+			result := db.Exec(
 				"INSERT INTO imageuploads (userID, fileName, fileSize, mimeType, filePath, isPublic, fileHash) VALUES (?, ?, ?, ?, ?, ?, ?)",
 				userID,
 				file.Filename,
@@ -167,7 +167,17 @@ func createEndpoints(router *gin.Engine) {
 				hashString,
 			)
 
-			c.JSON(200, gin.H{"status": "success", "message": "Image uploaded successfully!"})
+			var fileID string = hashString[:8]
+			if result.Error != nil {
+				fileID = ""
+			}
+
+			c.JSON(200, gin.H{
+				"status":  "success",
+				"message": "Image uploaded successfully!",
+				"path":    fmt.Sprintf("/files/%s", file.Filename),
+				"fileID":  fileID,
+			})
 		})
 
 		api.POST("/uploadFile", func(c *gin.Context) {
@@ -289,7 +299,7 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
-			if sessionID != "" { //Has an account
+			if sessionID != "" {
 
 				var row *sql.Row = db.Raw(
 					"SELECT userID FROM sessions WHERE sessionID = ?",
@@ -382,6 +392,29 @@ func createEndpoints(router *gin.Engine) {
 			}
 
 			c.JSON(200, info)
+		})
+
+		api.GET("/checkSession", func(c *gin.Context) {
+			sessionID, err := c.Cookie("session_id")
+			if err != nil || sessionID == "" {
+				c.JSON(200, gin.H{"loggedIn": false})
+				return
+			}
+
+			db, dbErr := connectDB()
+			if dbErr != nil {
+				c.JSON(200, gin.H{"loggedIn": false})
+				return
+			}
+
+			var username string
+			row := db.Raw("SELECT username FROM sessions WHERE sessionID = ?", sessionID).Row()
+			if scanErr := row.Scan(&username); scanErr != nil {
+				c.JSON(200, gin.H{"loggedIn": false})
+				return
+			}
+
+			c.JSON(200, gin.H{"loggedIn": true, "username": username})
 		})
 
 		api.POST("/validateKey", validateKeyHandler)
