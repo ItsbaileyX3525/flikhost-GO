@@ -28,11 +28,13 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `sessions` (
-  `sessionID` varchar(255) NOT NULL,
-  `userID` int(11) DEFAULT NULL,
-  `sessionData` longtext DEFAULT NULL,
-  `expiresAt` timestamp NULL DEFAULT NULL,
-  `createdAt` timestamp NOT NULL DEFAULT current_timestamp()
+  `ID` varchar(255) NOT NULL DEFAULT (UUID()),
+  `username` varchar(255) NOT NULL,
+  `userID` int(11) NOT NULL,
+  `token` varchar(255) NOT NULL UNIQUE,
+  `expiresAt` timestamp NOT NULL,
+  `creation` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- --------------------------------------------------------
@@ -98,9 +100,8 @@ CREATE TABLE `users` (
 -- Indexes for table `sessions`
 --
 ALTER TABLE `sessions`
-  ADD PRIMARY KEY (`sessionID`),
-  ADD KEY `idx_sessions_userID` (`userID`),
-  ADD KEY `idx_sessions_expiresAt` (`expiresAt`);
+  ADD UNIQUE KEY `unique_token` (`token`),
+  ADD KEY `userID` (`userID`);
 
 --
 -- Indexes for table `fileuploads`
@@ -126,6 +127,7 @@ ALTER TABLE `imageuploads`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`userID`),
   ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `username` (`username`),
   ADD KEY `idx_users_email` (`email`);
 
 --
@@ -158,7 +160,8 @@ ALTER TABLE `users`
 -- Constraints for table `sessions`
 --
 ALTER TABLE `sessions`
-  ADD CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`) ON DELETE SET NULL;
+  ADD CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
+  ADD CONSTRAINT `sessions_ibfk_2` FOREIGN KEY (`username`) REFERENCES `users` (`username`);
 
 --
 -- Constraints for table `fileuploads`

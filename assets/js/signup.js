@@ -51,7 +51,7 @@ signupForm.addEventListener('submit', async function(event) {
 
     console.log(username,password,email)
 
-    await fetch("/api/createAccount", {
+    const resp = await fetch("/api/createAccount", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -63,6 +63,22 @@ signupForm.addEventListener('submit', async function(event) {
             "turnstile" : turnstileToken
         })
     })
+
+    if (!resp.ok){
+        notify("Fetch request failed")
+        return
+    }
+
+    const data = await resp.json()
+
+    if (data.status == "success") {
+        notify(data.message, "success")
+        setTimeout(() => {
+            window.location.href = "/"
+        }, 2000);
+    } else {
+        notify(data.message, "error")
+    }
 
     resetTurnstile();
 });

@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash"
+	"html"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"time"
 	"unicode"
 
 	"github.com/gin-gonic/gin"
@@ -351,13 +353,21 @@ func createEndpoints(router *gin.Engine) {
 				return
 			}
 
+			var turnstile = body.Turnstile
+
 			var errMsg string
 			var err bool
-			err, errMsg = checkTurnstile(body.Turnstile)
+			err, errMsg = checkTurnstile(turnstile)
 			if !err {
 				c.JSON(200, gin.H{"status": "error", "message": "failed bot verifcation", "errormessage": errMsg})
 				return
 			}
+
+			var username = body.Username
+			var password = body.Password
+			var email = body.Email
+
+			username = html.EscapeString(username)
 
 			var db *gorm.DB
 			var dbErr error
@@ -370,8 +380,9 @@ func createEndpoints(router *gin.Engine) {
 			//Checking if the user already exist
 
 			var userCheck *sql.Row = db.Raw(
-				"SELECT username FROM users WHERE username = ?",
-				body.Username,
+				"SELECT username FROM users WHERE username = ? or email = ?",
+				username,
+				email,
 			).Row()
 
 			var existingUsername string
@@ -387,7 +398,6 @@ func createEndpoints(router *gin.Engine) {
 			}
 
 			//Check if password is ok
-			var password string = body.Password
 			if len(password) < 8 {
 				c.JSON(200, gin.H{"status": "error", "message": "password needs to be atleast 8 chars."})
 				return
@@ -415,8 +425,8 @@ func createEndpoints(router *gin.Engine) {
 
 			execute := db.Exec(
 				"INSERT INTO users (username, email, password, hasAgreedToTOS, isActive) VALUES (?, ?, ?, ?, ?)",
-				body.Username,
-				body.Email,
+				username,
+				email,
 				hash,
 				1,
 				1,
@@ -424,9 +434,60 @@ func createEndpoints(router *gin.Engine) {
 
 			if execute.Error != nil {
 				c.JSON(500, gin.H{"status": "error", "message": "Database execution failed."})
+				return
 			}
 
-			c.JSON(200, gin.H{"status": "success", "message": "account created successfully!"})
+			var userID string
+
+			var userIDFetch *sql.Row = db.Raw(
+				"SELECT userID FROM users WHERE username = ? LIMIT 1",
+				username,
+			).Row()
+
+			check = userIDFetch.Scan(&userID)
+			if check != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Error fetching userID... Server error?"})
+				return
+			}
+
+			var sessionID string
+			var sessionError error
+			sessionID, sessionError = generateRandomToken()
+
+			if sessionError != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Session generation failed."})
+				return
+			}
+
+			var result *gorm.DB = db.Exec(
+				"INSERT INTO sessions (ID, username, userID, token, expiresAt) VALUES (?, ?, ?, ?, ?)",
+				sessionID,
+				username,
+				userID,
+				sessionID,
+				time.Now().Add(time.Hour*24*30),
+			)
+
+			if result.Error != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Failed to store session in database"})
+				return
+			}
+
+			c.SetCookie(
+				"session_id",
+				sessionID,
+				60*60*24*30,
+				"/",
+				websiteURL,
+				cookieSeure,
+				true,
+			)
+
+			c.JSON(200, gin.H{
+				"status":   "success",
+				"message":  "account created successfully!",
+				"username": username,
+			})
 
 		})
 
@@ -509,7 +570,7 @@ func createEndpoints(router *gin.Engine) {
 			}
 
 			var username string
-			row := db.Raw("SELECT username FROM sessions WHERE sessionID = ?", sessionID).Row()
+			row := db.Raw("SELECT username FROM sessions WHERE ID = ?", sessionID).Row()
 			if scanErr := row.Scan(&username); scanErr != nil {
 				c.JSON(200, gin.H{"loggedIn": false})
 				return
