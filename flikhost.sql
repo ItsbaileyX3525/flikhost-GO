@@ -82,6 +82,7 @@ CREATE TABLE `imageuploads` (
 
 CREATE TABLE `users` (
   `userID` int(11) NOT NULL,
+  `username` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `hasAgreedToTOS` tinyint(1) NOT NULL DEFAULT 0,

@@ -12,8 +12,10 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -332,6 +334,100 @@ func createEndpoints(router *gin.Engine) {
 			)
 
 			c.JSON(200, gin.H{"status": "success", "message": "File stored successfully"})
+		})
+
+		api.POST("/createAccount", func(c *gin.Context) {
+			type bodyType struct {
+				Username  string `json:"username"`
+				Password  string `json:"password"`
+				Email     string `json:"email"`
+				Turnstile string `json:"turnstile"`
+			}
+
+			var body bodyType
+			var check error
+			if check = c.ShouldBindBodyWithJSON(&body); check != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "invalid form"})
+				return
+			}
+
+			var errMsg string
+			var err bool
+			err, errMsg = checkTurnstile(body.Turnstile)
+			if !err {
+				c.JSON(200, gin.H{"status": "error", "message": "failed bot verifcation", "errormessage": errMsg})
+				return
+			}
+
+			var db *gorm.DB
+			var dbErr error
+			db, dbErr = connectDB()
+			if dbErr != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Error connecting to the database"})
+				return
+			}
+
+			//Checking if the user already exist
+
+			var userCheck *sql.Row = db.Raw(
+				"SELECT username FROM users WHERE username = ?",
+				body.Username,
+			).Row()
+
+			var existingUsername string
+
+			check = userCheck.Scan(&existingUsername)
+			if check == nil {
+				c.JSON(200, gin.H{"status": "error", "message": "account with username already exists."})
+				return
+			}
+			if check != sql.ErrNoRows {
+				c.JSON(500, gin.H{"status": "error", "message": check.Error()})
+				return
+			}
+
+			//Check if password is ok
+			var password string = body.Password
+			if len(password) < 8 {
+				c.JSON(200, gin.H{"status": "error", "message": "password needs to be atleast 8 chars."})
+				return
+			}
+
+			var hasDigit bool = false
+			var r rune
+
+			for _, r = range password {
+				if unicode.IsDigit(r) {
+					hasDigit = true
+					break
+				}
+			}
+
+			if !hasDigit {
+				c.JSON(200, gin.H{"status": "error", "message": "Password must contain atleast 1 number"})
+				return
+			}
+
+			//hawk tuah hash that thang... idk
+			var bytes []byte
+			bytes, check = bcrypt.GenerateFromPassword([]byte(password), 14)
+			var hash string = string(bytes)
+
+			execute := db.Exec(
+				"INSERT INTO users (username, email, password, hasAgreedToTOS, isActive) VALUES (?, ?, ?, ?, ?)",
+				body.Username,
+				body.Email,
+				hash,
+				1,
+				1,
+			)
+
+			if execute.Error != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Database execution failed."})
+			}
+
+			c.JSON(200, gin.H{"status": "success", "message": "account created successfully!"})
+
 		})
 
 		//Get stuff for dirty shnitzels trynna see my endpoints
