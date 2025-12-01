@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,20 @@ var validationKey string
 var websiteURL string
 var cookieSeure bool
 var secretTurnstileToken string
+
+func checkSSL() (string, string) {
+	certPath := filepath.Join("ssl", "cert.pem")
+	keyPath := filepath.Join("ssl", "key.pem")
+
+	if _, err := os.Stat(certPath); err != nil {
+		return "", ""
+	}
+	if _, err := os.Stat(keyPath); err != nil {
+		return "", ""
+	}
+
+	return certPath, keyPath
+}
 
 func main() {
 	err := godotenv.Load()
@@ -63,5 +78,12 @@ func main() {
 
 	router.Static("/assets", "./assets")
 
-	router.Run(fmt.Sprintf(":%s", PORT))
+	certPath, keyPath := checkSSL()
+	if certPath != "" && keyPath != "" {
+		log.Print("SSL certificates found, starting on port 443")
+		router.RunTLS(":443", certPath, keyPath)
+	} else {
+		log.Printf("No SSL certificates, starting on port %s", PORT)
+		router.Run(fmt.Sprintf(":%s", PORT))
+	}
 }
