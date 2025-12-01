@@ -89,11 +89,21 @@ func createEndpoints(router *gin.Engine) {
 			}
 			defer fileOpen.Close()
 
-			var hasher hash.Hash = sha256.New()
-			if _, err = io.Copy(hasher, fileOpen); err != nil {
-				c.JSON(200, gin.H{"status": "error", "message": "Error hashing file"})
+			var imageData []byte
+			imageData, err = io.ReadAll(fileOpen)
+			if err != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Error reading image data"})
 				return
 			}
+
+			var aiDescription string = checkAI(imageData, mime)
+			if aiDescription == "no" {
+				c.JSON(200, gin.H{"status": "error", "message": "Only winter/x-mas themed images accepted during siege w13."})
+				return
+			}
+
+			var hasher hash.Hash = sha256.New()
+			hasher.Write(imageData)
 			var hashBytes []byte = hasher.Sum(nil)
 			var hashString string = hex.EncodeToString(hashBytes)
 
