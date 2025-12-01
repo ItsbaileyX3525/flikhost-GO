@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account - Flikhost</title>
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/assets/css/user.css">
+    <link rel="stylesheet" href="/assets/css/notify.css">
+    <script src="/assets/js/notify.js" defer></script>
+</head>
+<body>
+    <div class="centered">
+        <div class="mainBox" id="mainContent">
+            <div class="header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24"><path d="M5.85 17.1q1.275-.975 2.85-1.537T12 15t3.3.563t2.85 1.537q.875-1.025 1.363-2.325T20 12q0-3.325-2.337-5.663T12 4T6.337 6.338T4 12q0 1.475.488 2.775T5.85 17.1M12 13q-1.475 0-2.488-1.012T8.5 9.5t1.013-2.488T12 6t2.488 1.013T15.5 9.5t-1.012 2.488T12 13m0 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>
+                <h1 id="usernameDisplay">Loading...</h1>
+                <button class="signOutBtn" id="logoutBtn">Logout</button>
+            </div>
+            <div class="actions">
+                <a href="/" id="upload-href" style="display: none;"></a>
+                <a href="home" id="images-href" style="display: none;"></a>
+                <button class="goodButton" onclick="document.getElementById('upload-href').click();">new upload</button>
+                <button onclick="document.getElementById('images-href').click();">your images</button>
+                <div class="info">
+                    <div class="infoContainer">
+                        <p>Username: </p>
+                        <input type="text" disabled id="infoUsername" value="Loading...">
+                    </div>
+                    <div class="infoContainer">
+                        <p>Email: </p>
+                        <input type="text" disabled id="infoEmail" value="Loading...">
+                    </div>
+                    <div class="infoContainer">
+                        <p>Account created: </p>
+                        <input type="text" disabled id="infoCreated" value="Loading...">
+                    </div>
+                </div>
+            </div>
+            <div class="bottomTag">
+                <p>created with ♥ by <a target="_blank" href="http://reckedpr.xyz">reckedpr</a> & <a target="_blank" href="https://bailey.flik.host">bailey</a></p>
+            </div>
+        </div>
+    </div>
+    <div id="notif-container"></div>
+    <script src="/assets/js/account.js"></script>
+</body>
+</html>

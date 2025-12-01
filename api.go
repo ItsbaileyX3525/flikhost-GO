@@ -152,7 +152,7 @@ func createEndpoints(router *gin.Engine) {
 			if sessionID != "" {
 
 				var row *sql.Row = db.Raw(
-					"SELECT userID FROM sessions WHERE sessionID = ?",
+					"SELECT userID FROM sessions WHERE ID = ?",
 					sessionID,
 				).Row()
 
@@ -311,7 +311,7 @@ func createEndpoints(router *gin.Engine) {
 			if sessionID != "" {
 
 				var row *sql.Row = db.Raw(
-					"SELECT userID FROM sessions WHERE sessionID = ?",
+					"SELECT userID FROM sessions WHERE ID = ?",
 					sessionID,
 				).Row()
 
@@ -478,7 +478,7 @@ func createEndpoints(router *gin.Engine) {
 				sessionID,
 				60*60*24*30,
 				"/",
-				websiteURL,
+				"",
 				cookieSeure,
 				true,
 			)
@@ -489,6 +489,101 @@ func createEndpoints(router *gin.Engine) {
 				"username": username,
 			})
 
+		})
+
+		// Login endpoint
+		api.POST("/login", func(c *gin.Context) {
+			type bodyType struct {
+				Username string `json:"username"`
+				Password string `json:"password"`
+			}
+
+			var body bodyType
+			var check error
+			if check = c.ShouldBindBodyWithJSON(&body); check != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Invalid form"})
+				return
+			}
+
+			var username = body.Username
+			var password = body.Password
+
+			if username == "" || password == "" {
+				c.JSON(200, gin.H{"status": "error", "message": "Username and password are required"})
+				return
+			}
+
+			var db *gorm.DB
+			var dbErr error
+			db, dbErr = connectDB()
+			if dbErr != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Error connecting to the database"})
+				return
+			}
+
+			var userID int
+			var storedHash string
+			var row *sql.Row = db.Raw(
+				"SELECT userID, password FROM users WHERE username = ?",
+				username,
+			).Row()
+
+			check = row.Scan(&userID, &storedHash)
+			if check == sql.ErrNoRows {
+				c.JSON(200, gin.H{"status": "error", "message": "Invalid username or password"})
+				return
+			}
+			if check != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Database error"})
+				return
+			}
+
+			// Verify password
+			check = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
+			if check != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Invalid username or password"})
+				return
+			}
+
+			// Generate session
+			var sessionID string
+			var sessionError error
+			sessionID, sessionError = generateRandomToken()
+
+			if sessionError != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Session generation failed"})
+				return
+			}
+
+			var result *gorm.DB = db.Exec(
+				"INSERT INTO sessions (ID, username, userID, token, expiresAt) VALUES (?, ?, ?, ?, ?)",
+				sessionID,
+				username,
+				userID,
+				sessionID,
+				time.Now().Add(time.Hour*24*30),
+			)
+
+			if result.Error != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Failed to create session"})
+				return
+			}
+
+			c.SetCookie(
+				"session_id",
+				sessionID,
+				60*60*24*30,
+				"/",
+				"",
+				cookieSeure,
+				true,
+			)
+
+			c.JSON(200, gin.H{
+				"status":   "success",
+				"message":  "Logged in successfully!",
+				"username": username,
+			})
 		})
 
 		//Get stuff for dirty shnitzels trynna see my endpoints
@@ -582,5 +677,128 @@ func createEndpoints(router *gin.Engine) {
 		api.POST("/validateKey", validateKeyHandler)
 		api.POST("/deleteImage", deleteImageHandler)
 		api.GET("/proxy", proxyHandler)
+
+		// Get user account info
+		api.GET("/getUserInfo", func(c *gin.Context) {
+			sessionID, err := c.Cookie("session_id")
+			if err != nil || sessionID == "" {
+				c.JSON(200, gin.H{"status": "error", "message": "Not logged in"})
+				return
+			}
+
+			db, dbErr := connectDB()
+			if dbErr != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Database connection error"})
+				return
+			}
+
+			var userID int
+			var username string
+			row := db.Raw("SELECT userID, username FROM sessions WHERE ID = ?", sessionID).Row()
+			if scanErr := row.Scan(&userID, &username); scanErr != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Session not found"})
+				return
+			}
+
+			var email string
+			var createdAt time.Time
+			userRow := db.Raw("SELECT email, createdAt FROM users WHERE userID = ?", userID).Row()
+			if scanErr := userRow.Scan(&email, &createdAt); scanErr != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "User not found"})
+				return
+			}
+
+			c.JSON(200, gin.H{
+				"status":    "success",
+				"username":  username,
+				"email":     email,
+				"createdAt": createdAt.Format("2006-01-02 15:04:05"),
+			})
+		})
+
+		// Get user's uploaded images
+		api.GET("/getUserImages", func(c *gin.Context) {
+			sessionID, err := c.Cookie("session_id")
+			if err != nil || sessionID == "" {
+				c.JSON(200, gin.H{"status": "error", "message": "Not logged in"})
+				return
+			}
+
+			db, dbErr := connectDB()
+			if dbErr != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Database connection error"})
+				return
+			}
+
+			var userID int
+			var username string
+			row := db.Raw("SELECT userID, username FROM sessions WHERE ID = ?", sessionID).Row()
+			if scanErr := row.Scan(&userID, &username); scanErr != nil {
+				c.JSON(200, gin.H{"status": "error", "message": "Session not found"})
+				return
+			}
+
+			rows, queryErr := db.Raw(
+				"SELECT uploadID, fileName, filePath, uploadedAt FROM imageuploads WHERE userID = ? ORDER BY uploadedAt DESC",
+				userID,
+			).Rows()
+			if queryErr != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Error fetching images"})
+				return
+			}
+			defer rows.Close()
+
+			var images []gin.H
+			for rows.Next() {
+				var uploadID int
+				var fileName string
+				var filePath string
+				var uploadedAt time.Time
+				if scanErr := rows.Scan(&uploadID, &fileName, &filePath, &uploadedAt); scanErr != nil {
+					continue
+				}
+				images = append(images, gin.H{
+					"id":         uploadID,
+					"name":       fileName,
+					"path":       filePath,
+					"uploadDate": uploadedAt.Format("2006-01-02 15:04:05"),
+				})
+			}
+
+			c.JSON(200, gin.H{
+				"status":   "success",
+				"username": username,
+				"images":   images,
+			})
+		})
+
+		// Logout endpoint
+		api.POST("/logout", func(c *gin.Context) {
+			sessionID, err := c.Cookie("session_id")
+			if err != nil || sessionID == "" {
+				c.JSON(200, gin.H{"status": "error", "message": "Not logged in"})
+				return
+			}
+
+			db, dbErr := connectDB()
+			if dbErr != nil {
+				c.JSON(500, gin.H{"status": "error", "message": "Database connection error"})
+				return
+			}
+
+			db.Exec("DELETE FROM sessions WHERE ID = ?", sessionID)
+
+			c.SetCookie(
+				"session_id",
+				"",
+				-1,
+				"/",
+				"",
+				cookieSeure,
+				true,
+			)
+
+			c.JSON(200, gin.H{"status": "success", "message": "Logged out successfully"})
+		})
 	}
 }

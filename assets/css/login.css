@@ -1,0 +1,453 @@
+/* Add a very small screen breakpoint for extreme cases */
+@media (max-width: 350px), (max-height: 600px) {
+    body {
+        padding: 0.25rem;
+    }
+    
+    .mainBox {
+        padding: 0.75rem;
+        border-radius: 10px;
+    }
+    
+    .innerContainer {
+        gap: 0.75rem;
+    }
+    
+    .leftBox {
+        height: 20vh;
+        min-height: 80px;
+        max-height: 120px;
+    }
+    
+    .formContainer {
+        padding: 0.5rem;
+    }
+    
+    input, button {
+        height: 2.5rem;
+    }
+    
+    .formInputs {
+        gap: 0.5rem;
+    }
+    
+    .inputContainer {
+        gap: 0.125rem;
+    }
+    
+    .formContainer > div {
+        padding-bottom: 10px !important;
+        padding-top: 5px !important;
+    }
+    
+    #ThisIsATurnstileWidget {
+        transform: scale(0.8);
+    }
+}@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    width: 100%;
+    height: 100vh;
+    background-color: #686279;
+    font-family: 'Inter', sans-serif;
+    color: #aaaaab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.centered {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 500;
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+    word-wrap: break-word;
+}
+
+p, a, label {
+    font-size: 0.9375rem;
+}
+
+a {
+    color: #baa3f5;
+    text-decoration: underline;
+}
+
+.mainBox {
+    width: 100%;
+    background-color: #332c41;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 0 100px -5px #332c41;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: none;
+    box-sizing: border-box;
+}
+
+.innerContainer {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    max-height: none;
+    overflow: visible;
+}
+
+.leftBox, .rightBox {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    max-height: 100%;
+}
+
+.leftBox {
+    background: #5a5398 url('/assets/images/purple-mojave.jpg') center/cover no-repeat;
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+}
+
+.innerLeft {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    width: 100%;
+    background: linear-gradient(to top, rgba(51, 44, 65, 0.7), transparent);
+}
+
+.backButton button {
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.9375rem;
+    background: rgba(255,255,255,0.124);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+.backButton button:hover {
+    box-shadow: 0 0 25px -3px #312a3e;
+}
+
+.rightBox {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #3c364c;
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: visible;
+}
+
+.formInputs {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.inputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+input, button {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9375rem;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+input {
+    height: 3.5rem;
+    background-color: #3c364c;
+    color: #fff;
+    border: 1.5px solid transparent;
+    padding: 0 1rem;
+    transition: border-color 0.2s;
+}
+
+.rightBox input {
+    background-color: #332c41;
+}
+
+input:focus {
+    border-color: #b9a7f5;
+    outline: none;
+}
+
+::placeholder {
+    color: #767286;
+    opacity: 1;
+}
+
+button {
+    height: 3.5rem;
+    background-color: #6d54b5;
+    color: #fff;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+button:hover {
+    box-shadow: 0 0 20px -3px #6d54b5;
+}
+
+/* Missing styles for elements in your HTML */
+.toc-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.checkbox-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    padding-left: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+.custom-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1rem;
+    width: 1rem;
+    background-color: #332c41;
+    border: 1px solid #767286;
+    border-radius: 4px;
+}
+
+.custom-checkbox:checked ~ .checkmark {
+    background-color: #6d54b5;
+    border-color: #6d54b5;
+}
+
+.passwordWrap {
+    position: relative;
+    width: 100%;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #767286;
+}
+
+#notif-container {
+    width: 100%;
+}
+
+/* Large screens */
+@media (min-width: 1440px) {
+    .mainBox {
+        padding: 2.5rem;
+        max-width: 1300px;
+    }
+    
+    .innerContainer {
+        height: auto;
+        min-height: 500px;
+        max-height: none;
+    }
+    
+    .leftBox, .rightBox {
+        min-height: 500px;
+    }
+    
+    .formContainer {
+        overflow-y: visible;
+    }
+}
+
+/* Tablet view tweaks */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .mainBox {
+        gap: 1.25rem;
+        padding: 1.5rem;
+    }
+    
+    .formContainer {
+        padding: 1.25rem;
+    }
+    
+    .formContainer > div {
+        padding-bottom: 30px !important;
+        padding-top: 15px !important;
+    }
+    
+    .formInputs {
+        gap: 1rem;
+    }
+}
+
+/* Make everything responsive only on mobile */
+@media (max-width: 768px) {
+    body {
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .mainBox {
+        max-height: calc(100vh - 2rem);
+    }
+    
+    .innerContainer {
+        flex-direction: column;
+        max-height: calc(100vh - 5rem);
+        overflow: hidden;
+    }
+    
+    .leftBox {
+        order: -1;
+        flex: 0 0 auto;
+        height: 30vh;
+        max-height: 200px;
+        min-height: auto;
+    }
+    
+    .rightBox {
+        flex: 1 1 auto;
+        min-height: auto;
+        overflow: hidden;
+    }
+    
+    .formContainer {
+        overflow-y: auto;
+    }
+    
+    .formContainer > div {
+        padding-bottom: 20px !important;
+        padding-top: 10px !important;
+    }
+    
+    .formContainer > div h1 {
+        padding-bottom: 10px !important;
+    }
+}
+
+/* Mobile & below: tighten padding + full-width back button */
+@media (max-width: 480px) {
+    body {
+        padding: 0.5rem;
+    }
+    
+    .mainBox {
+        padding: 1rem;
+        border-radius: 15px;
+    }
+    
+    .innerContainer {
+        max-height: calc(100vh - 3rem);
+    }
+    
+    h1 {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+        margin-bottom: 0.25rem;
+    }
+    
+    .innerLeft {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .backButton, .backButton button {
+        width: 100%;
+    }
+    
+    .leftBox {
+        height: 25vh;
+        max-height: 150px;
+        min-height: 100px;
+    }
+    
+    .formContainer {
+        padding: 0.75rem;
+    }
+    
+    input, button {
+        height: 2.75rem;
+    }
+    
+    .toc-container {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+    .formInputs {
+        gap: 0.75rem;
+    }
+    
+    .inputContainer {
+        gap: 0.25rem;
+    }
+    
+    p, a, label {
+        font-size: 0.875rem;
+    }
+    
+    .formContainer > div {
+        padding-bottom: 15px !important;
+        padding-top: 5px !important;
+    }
+    
+    .formContainer > div h1 {
+        padding-bottom: 5px !important;
+    }
+    
+    /* Scale down the turnstile widget if needed */
+    #ThisIsATurnstileWidget {
+        transform-origin: left top;
+        transform: scale(0.9);
+    }
+}

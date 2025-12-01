@@ -97,7 +97,7 @@ func deleteImageHandler(c *gin.Context) {
 		}
 
 		var scanErr error
-		row := db.Raw("SELECT userID FROM sessions WHERE sessionID = ?", sessionID).Row()
+		row := db.Raw("SELECT userID FROM sessions WHERE ID = ?", sessionID).Row()
 		if scanErr = row.Scan(&userID); scanErr != nil {
 			c.JSON(200, gin.H{"success": false, "message": "Session not found"})
 			return
@@ -112,21 +112,21 @@ func deleteImageHandler(c *gin.Context) {
 
 	var imagePath string
 	if userID == nil {
-		if err := db.Raw("SELECT filePath FROM imageuploads WHERE fileID = ?", req.ImageID).Row().Scan(&imagePath); err != nil {
+		if err := db.Raw("SELECT filePath FROM imageuploads WHERE uploadID = ?", req.ImageID).Row().Scan(&imagePath); err != nil {
 			c.JSON(200, gin.H{"success": false, "message": "Error fetching image"})
 			return
 		}
 	} else {
-		if err := db.Raw("SELECT filePath FROM imageuploads WHERE fileID = ? AND userID = ?", req.ImageID, userID).Row().Scan(&imagePath); err != nil {
+		if err := db.Raw("SELECT filePath FROM imageuploads WHERE uploadID = ? AND userID = ?", req.ImageID, userID).Row().Scan(&imagePath); err != nil {
 			c.JSON(200, gin.H{"success": false, "message": "Error fetching image"})
 			return
 		}
 	}
 
 	if userID == nil {
-		db.Exec("DELETE FROM imageuploads WHERE fileID = ?", req.ImageID)
+		db.Exec("DELETE FROM imageuploads WHERE uploadID = ?", req.ImageID)
 	} else {
-		db.Exec("DELETE FROM imageuploads WHERE fileID = ? AND userID = ?", req.ImageID, userID)
+		db.Exec("DELETE FROM imageuploads WHERE uploadID = ? AND userID = ?", req.ImageID, userID)
 	}
 
 	filePath := filepath.Join("./images", filepath.Base(imagePath))

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Flikhost</title>
+
+    <link rel="stylesheet" href="/assets/css/home.css">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+
+    <script src="/assets/js/notify.js" defer></script>
+    <link rel="stylesheet" href="/assets/css/notify.css">
+</head>
+<body>
+    <div class="centered">
+        <div class="account">
+            <div>
+                <h2>Your uploads</h2>
+                <p style='font-size: 16px;' id="usernameDisplay">@loading...</p>
+            </div>
+            <div class="accountButton">
+                <a href="account" id="account-href" style="display: none;"></a>
+                <a href="/" id="upload-href" style="display: none;"></a>
+                <button onclick="document.getElementById('upload-href').click();">upload</button>
+                <button onclick="document.getElementById('account-href').click();">account</button>
+            </div>
+        </div>
+        <div id="notif-container"></div>
+        <div class="itemContainer" id="imageContainer">
+            <!-- Images will be loaded here via JavaScript -->
+            <p class="empty-state">Loading your images...</p>
+        </div>
+    </div>
+    <script src="/assets/js/home.js"></script>
+</body>
+</html>

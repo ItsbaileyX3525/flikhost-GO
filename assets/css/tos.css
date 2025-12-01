@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+html {
+    height: 100%;
+    font-family: inter;
+    color: #aaaaab;
+}
+
+body {
+    background-color: #686279;
+    margin: 0;
+    padding: 15px;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+span {
+    color: #baa3f5;
+    text-decoration: underline;
+}
+
+h2 {
+    font-family: inter;
+    font-size: 42px;
+    font-weight: 500;
+    color: #FFFFFF;
+}
+
+h1 {
+    font-family: inter;
+    font-size: 38px;
+    font-weight: 500;
+    color: #FFFFFF;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+input {
+    height: 56px;
+    width: 100%;
+    font-family: inter;
+    font-size: 15px;
+    background-color: #3c364c;
+    color: #FFFFFF;
+    outline: none;
+    border: 1.5px #ffffff00 solid;
+    border-radius: 8px;
+    padding-left: 15px;
+    box-sizing: border-box;
+}
+
+input:focus-within {
+    border-color: #b9a7f5;
+}
+
+::placeholder {
+    color: #767286;
+    opacity: 1;
+}
+
+button {
+    height: 56px;
+    width: 100%;
+    font-family: inter;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.124);
+    color: #FFFFFF;
+    outline: none;
+    border: 2px #ffffff00 solid;
+    border-radius: 8px;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: box-shadow ease 0.2s, border ease 0.2s;
+    margin-top: auto;
+    padding: 0;
+}
+
+button:hover {
+    box-shadow: 0px 0px 5px -3px #b9a7f5;
+    border: 2px solid #b9a7f5;
+}
+
+a {
+    color: #baa3f5;
+    text-decoration: underline;
+}
+
+.centered {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    width: 100%;
+}
+
+.mainBox {
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    padding: 50px;
+    gap: 25px;
+    border-radius: 20px;
+    background-color: #332c41;
+    box-shadow: 0px 0px 100px -5px #332c41;
+    box-sizing: border-box;
+}
+
+.termContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.innerContainer {
+    padding: 25px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.124);
+    max-height: 600px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Media queries for responsive design */
+@media screen and (max-width: 600px) {
+    h2 {
+        font-size: 32px;
+    }
+    
+    h1 {
+        font-size: 28px;
+    }
+    
+    .mainBox {
+        padding: 30px 20px;
+        max-width: 100%;
+        border-radius: 15px;
+    }
+    
+    .innerContainer {
+        padding: 15px;
+        max-height: 450px;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    h2 {
+        font-size: 28px;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    .mainBox {
+        padding: 20px 15px;
+        border-radius: 12px;
+    }
+    .innerContainer {
+        padding: 15px;
+    }
+    input, button {
+        height: 50px;
+    }
+}
