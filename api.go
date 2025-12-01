@@ -325,17 +325,20 @@ func createEndpoints(router *gin.Engine) {
 			}
 
 			db.Exec(
-				"INSERT INTO fileuploads (userID, fileName, fileSize, mimeType, filePath, isPublic, fileHash) VALUES (?, ?, ?, ?, ?, ?, ?)",
+				"INSERT INTO fileuploads (userID, fileName, fileSize, filePath, isPublic, fileHash) VALUES (?, ?, ?, ?, ?, ?)",
 				userID,
 				file.Filename,
 				file.Size,
-				file.Header.Get("Content-Type"),
 				fmt.Sprintf("/files/%s", file.Filename),
 				1,
 				hashString,
 			)
 
-			c.JSON(200, gin.H{"status": "success", "message": "File stored successfully"})
+			c.JSON(200, gin.H{
+				"status":  "success",
+				"message": "File stored successfully",
+				"path":    fmt.Sprintf("/files/%s", file.Filename),
+			})
 		})
 
 		api.POST("/createAccount", func(c *gin.Context) {
