@@ -54,6 +54,9 @@ func main() {
 		log.Fatal("Secure method not found")
 	}
 
+	// Initialize visitor tracking database
+	visitorDB := initVisitorDB()
+
 	//gin.SetMode(gin.ReleaseMode) //Uncomment in prod
 	var router *gin.Engine = gin.Default()
 
@@ -74,9 +77,12 @@ func main() {
 	createEndpoints(router)
 	serveFiles(router)
 	serveImages(router)
-	serveHTML(router)
+
+	registerAPIRoutes(router, visitorDB)
 
 	router.Static("/assets", "./assets")
+
+	serveHTML(router)
 
 	certPath, keyPath := checkSSL()
 	if certPath != "" && keyPath != "" {

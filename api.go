@@ -12,6 +12,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 	"unicode"
@@ -93,12 +94,6 @@ func createEndpoints(router *gin.Engine) {
 			imageData, err = io.ReadAll(fileOpen)
 			if err != nil {
 				c.JSON(200, gin.H{"status": "error", "message": "Error reading image data"})
-				return
-			}
-
-			var aiDescription string = checkAI(imageData, mime)
-			if aiDescription == "no" {
-				c.JSON(200, gin.H{"status": "error", "message": "Only winter/x-mas themed images accepted during siege w13."})
 				return
 			}
 
@@ -348,6 +343,200 @@ func createEndpoints(router *gin.Engine) {
 				"status":  "success",
 				"message": "File stored successfully",
 				"path":    fmt.Sprintf("/files/%s", file.Filename),
+			})
+		})
+
+		api.POST("/apiUpload", func(c *gin.Context) {
+			type SubmitBody struct {
+				WebsiteName string `form:"websiteName"`
+				ApiKey      string `form:"apiKey"`
+			}
+
+			var body SubmitBody
+			var err error
+
+			if err = c.ShouldBind(&body); err != nil {
+				c.JSON(400, gin.H{"success": false, "message": "Invalid form fields"})
+				return
+			}
+
+			// Validate API key exists and get userID
+			if body.ApiKey == "" {
+				c.JSON(200, gin.H{"success": false, "message": "API key is required."})
+				return
+			}
+
+			// Connect to database early to validate API key
+			var db *gorm.DB
+			var dbErr error
+			db, dbErr = connectDB()
+			if dbErr != nil {
+				c.JSON(500, gin.H{"success": false, "message": "Error connecting to the database"})
+				return
+			}
+
+			// Validate API key and get user info
+			var userID int
+			var username string
+			var apiKeyRow *sql.Row = db.Raw(
+				"SELECT userID, username FROM users WHERE apiKey = ? AND isActive = 1",
+				body.ApiKey,
+			).Row()
+
+			var scanErr error
+			scanErr = apiKeyRow.Scan(&userID, &username)
+			if scanErr != nil {
+				c.JSON(200, gin.H{"success": false, "message": "API key is invalid or has expired."})
+				return
+			}
+
+			const maxUploadSize int64 = 81 << 20 // 81 MB
+
+			if c.Request.ContentLength > maxUploadSize {
+				c.JSON(200, gin.H{"success": false, "message": "File too big (max 80MB)"})
+				return
+			}
+
+			if err = c.Request.ParseMultipartForm(maxUploadSize); err != nil {
+				c.JSON(200, gin.H{"success": false, "message": "Invalid multipart form"})
+				return
+			}
+
+			// Try to get the file (support both "imageUpload" and "file" field names)
+			var file *multipart.FileHeader
+			file, err = c.FormFile("imageUpload")
+			if err != nil {
+				file, err = c.FormFile("file")
+				if err != nil {
+					c.JSON(200, gin.H{"success": false, "message": "No file uploaded."})
+					return
+				}
+			}
+
+			// Basic file size validation
+			if file.Size > 80<<20 { // 80 MB
+				c.JSON(200, gin.H{"success": false, "message": "File too big (max 80MB)"})
+				return
+			}
+
+			// Open file to read content
+			var fileOpen multipart.File
+			fileOpen, err = file.Open()
+			if err != nil {
+				c.JSON(200, gin.H{"success": false, "message": "Error opening file"})
+				return
+			}
+			defer fileOpen.Close()
+
+			// Read file data for mime detection and hashing
+			var fileData []byte
+			fileData, err = io.ReadAll(fileOpen)
+			if err != nil {
+				c.JSON(200, gin.H{"success": false, "message": "Error reading file data"})
+				return
+			}
+
+			// Detect mime type
+			var mime string = http.DetectContentType(fileData)
+
+			// Determine if it's an image or file
+			var fileType string = "file"
+			for _, validMime := range validImageMimeTypes {
+				if mime == validMime {
+					fileType = "image"
+					break
+				}
+			}
+
+			// Hash the file
+			var hasher hash.Hash = sha256.New()
+			hasher.Write(fileData)
+			var hashBytes []byte = hasher.Sum(nil)
+			var hashString string = hex.EncodeToString(hashBytes)
+
+			// Check for duplicate uploads in apiuploads table
+			var existingFilePath string
+			var fileHashScan *sql.Row = db.Raw(
+				"SELECT filePath FROM apiuploads WHERE fileHash = ?",
+				hashString,
+			).Row()
+
+			scanErr = fileHashScan.Scan(&existingFilePath)
+			if scanErr == nil {
+				// File already exists, return existing link
+				var link string = fmt.Sprintf("https://%s%s", c.Request.Host, existingFilePath)
+				c.JSON(200, gin.H{
+					"success": true,
+					"message": "Uploaded successfully",
+					"link":    link,
+				})
+				return
+			}
+
+			if scanErr != sql.ErrNoRows {
+				c.JSON(200, gin.H{
+					"success": false,
+					"message": scanErr.Error(),
+				})
+				return
+			}
+
+			// Generate unique filename
+			var ext = filepath.Ext(file.Filename)
+			var uniqueFilename = fmt.Sprintf("%s%s", randomiseName(), ext)
+
+			// Determine storage directory based on file type
+			var directory string
+			if fileType == "image" {
+				directory = "images"
+			} else {
+				directory = "files"
+			}
+
+			// Save file to disk
+			var filePath string = fmt.Sprintf("./%s/%s", directory, uniqueFilename)
+			var dst *os.File
+			dst, err = os.Create(filePath)
+			if err != nil {
+				c.JSON(200, gin.H{"success": false, "message": "Error creating file"})
+				return
+			}
+			defer dst.Close()
+
+			if _, err = dst.Write(fileData); err != nil {
+				c.JSON(200, gin.H{"success": false, "message": "Error writing file"})
+				return
+			}
+
+			// Insert into apiuploads table
+			var uploadIP string = c.ClientIP()
+			var dbFilePath string = fmt.Sprintf("/%s/%s", directory, uniqueFilename)
+
+			var result = db.Exec(
+				"INSERT INTO apiuploads (userID, websiteName, fileName, fileSize, mimeType, fileType, filePath, uploadIP, fileHash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				userID,
+				body.WebsiteName,
+				file.Filename,
+				file.Size,
+				mime,
+				fileType,
+				dbFilePath,
+				uploadIP,
+				hashString,
+			)
+
+			if result.Error != nil {
+				c.JSON(200, gin.H{"success": false, "message": "Database insert failed: " + result.Error.Error()})
+				return
+			}
+
+			log.Printf("API upload from user %s (ID: %d) via %s: %s (%s, %s) - IP: %s", username, userID, body.WebsiteName, uniqueFilename, fileType, mime, uploadIP)
+
+			var link string = fmt.Sprintf("https://%s/%s/%s", c.Request.Host, directory, uniqueFilename)
+			c.JSON(200, gin.H{
+				"success": true,
+				"message": "Uploaded successfully",
+				"link":    link,
 			})
 		})
 
@@ -715,8 +904,9 @@ func createEndpoints(router *gin.Engine) {
 
 			var email string
 			var createdAt time.Time
-			userRow := db.Raw("SELECT email, createdAt FROM users WHERE userID = ?", userID).Row()
-			if scanErr := userRow.Scan(&email, &createdAt); scanErr != nil {
+			var apiKey string
+			userRow := db.Raw("SELECT email, createdAt, apiKey FROM users WHERE userID = ?", userID).Row()
+			if scanErr := userRow.Scan(&email, &createdAt, &apiKey); scanErr != nil {
 				c.JSON(200, gin.H{"status": "error", "message": "User not found"})
 				return
 			}
@@ -725,6 +915,7 @@ func createEndpoints(router *gin.Engine) {
 				"status":    "success",
 				"username":  username,
 				"email":     email,
+				"apiKey":    apiKey,
 				"createdAt": createdAt.Format("2006-01-02 15:04:05"),
 			})
 		})

@@ -27,14 +27,16 @@ SET time_zone = "+00:00";
 -- Table structure for table `sessions`
 --
 
-CREATE TABLE `sessions` (
+CREATE TABLE IF NOT EXISTS `sessions` (
   `ID` varchar(255) NOT NULL DEFAULT (UUID()),
   `username` varchar(255) NOT NULL,
   `userID` int(11) NOT NULL,
   `token` varchar(255) NOT NULL UNIQUE,
   `expiresAt` timestamp NOT NULL,
   `creation` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`ID`)
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `unique_token` (`token`),
+  KEY `userID` (`userID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- --------------------------------------------------------
@@ -43,8 +45,8 @@ CREATE TABLE `sessions` (
 -- Table structure for table `fileuploads`
 --
 
-CREATE TABLE `fileuploads` (
-  `uploadID` int(11) NOT NULL,
+CREATE TABLE IF NOT EXISTS `fileuploads` (
+  `uploadID` int(11) NOT NULL AUTO_INCREMENT,
   `userID` int(11) DEFAULT NULL,
   `fileName` varchar(255) NOT NULL,
   `fileSize` int(11) NOT NULL,
@@ -53,7 +55,11 @@ CREATE TABLE `fileuploads` (
   `expiresAt` timestamp NULL DEFAULT NULL,
   `isPublic` tinyint(1) NOT NULL DEFAULT 0,
   `downloadCount` int(11) NOT NULL DEFAULT 0,
-  `fileHash` varchar(64) DEFAULT NULL
+  `fileHash` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`uploadID`),
+  UNIQUE KEY `filePath` (`filePath`),
+  KEY `idx_fileUploads_userID` (`userID`),
+  KEY `idx_fileUploads_uploadedAt` (`uploadedAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- --------------------------------------------------------
@@ -62,8 +68,8 @@ CREATE TABLE `fileuploads` (
 -- Table structure for table `imageuploads`
 --
 
-CREATE TABLE `imageuploads` (
-  `uploadID` int(11) NOT NULL,
+CREATE TABLE IF NOT EXISTS `imageuploads` (
+  `uploadID` int(11) NOT NULL AUTO_INCREMENT,
   `userID` int(11) DEFAULT NULL,
   `fileName` varchar(255) NOT NULL,
   `fileSize` int(11) NOT NULL,
@@ -73,7 +79,38 @@ CREATE TABLE `imageuploads` (
   `expiresAt` timestamp NULL DEFAULT NULL,
   `isPublic` tinyint(1) NOT NULL DEFAULT 0,
   `downloadCount` int(11) NOT NULL DEFAULT 0,
-  `fileHash` varchar(64) DEFAULT NULL
+  `fileHash` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`uploadID`),
+  UNIQUE KEY `filePath` (`filePath`),
+  KEY `idx_imageUploads_userID` (`userID`),
+  KEY `idx_imageUploads_uploadedAt` (`uploadedAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `apiuploads`
+--
+
+CREATE TABLE IF NOT EXISTS `apiuploads` (
+  `uploadID` int(11) NOT NULL AUTO_INCREMENT,
+  `userID` int(11) DEFAULT NULL,
+  `websiteName` varchar(255) DEFAULT NULL,
+  `fileName` varchar(255) NOT NULL,
+  `fileSize` bigint(20) NOT NULL,
+  `mimeType` varchar(100) NOT NULL,
+  `fileType` enum('image','file') NOT NULL,
+  `filePath` varchar(500) NOT NULL,
+  `uploadedAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `uploadIP` varchar(45) DEFAULT NULL,
+  `fileHash` varchar(64) DEFAULT NULL,
+  `downloadCount` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`uploadID`),
+  UNIQUE KEY `filePath` (`filePath`),
+  KEY `idx_apiUploads_userID` (`userID`),
+  KEY `idx_apiUploads_websiteName` (`websiteName`),
+  KEY `idx_apiUploads_uploadedAt` (`uploadedAt`),
+  KEY `idx_apiUploads_fileHash` (`fileHash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- --------------------------------------------------------
@@ -82,98 +119,22 @@ CREATE TABLE `imageuploads` (
 -- Table structure for table `users`
 --
 
-CREATE TABLE `users` (
-  `userID` int(11) NOT NULL,
+CREATE TABLE IF NOT EXISTS `users` (
+  `userID` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `apiKey` varchar(36) DEFAULT (UUID()),
   `hasAgreedToTOS` tinyint(1) NOT NULL DEFAULT 0,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-  `isActive` tinyint(1) NOT NULL DEFAULT 1
+  `isActive` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`userID`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `apiKey` (`apiKey`),
+  KEY `idx_users_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `sessions`
---
-ALTER TABLE `sessions`
-  ADD UNIQUE KEY `unique_token` (`token`),
-  ADD KEY `userID` (`userID`);
-
---
--- Indexes for table `fileuploads`
---
-ALTER TABLE `fileuploads`
-  ADD PRIMARY KEY (`uploadID`),
-  ADD UNIQUE KEY `filePath` (`filePath`),
-  ADD KEY `idx_fileUploads_userID` (`userID`),
-  ADD KEY `idx_fileUploads_uploadedAt` (`uploadedAt`);
-
---
--- Indexes for table `imageuploads`
---
-ALTER TABLE `imageuploads`
-  ADD PRIMARY KEY (`uploadID`),
-  ADD UNIQUE KEY `filePath` (`filePath`),
-  ADD KEY `idx_imageUploads_userID` (`userID`),
-  ADD KEY `idx_imageUploads_uploadedAt` (`uploadedAt`);
-
---
--- Indexes for table `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`userID`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD UNIQUE KEY `username` (`username`),
-  ADD KEY `idx_users_email` (`email`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `fileuploads`
---
-ALTER TABLE `fileuploads`
-  MODIFY `uploadID` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `imageuploads`
---
-ALTER TABLE `imageuploads`
-  MODIFY `uploadID` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `userID` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `sessions`
---
-ALTER TABLE `sessions`
-  ADD CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
-  ADD CONSTRAINT `sessions_ibfk_2` FOREIGN KEY (`username`) REFERENCES `users` (`username`);
-
---
--- Constraints for table `fileuploads`
---
-ALTER TABLE `fileuploads`
-  ADD CONSTRAINT `fileuploads_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`) ON DELETE SET NULL;
-
---
--- Constraints for table `imageuploads`
---
-ALTER TABLE `imageuploads`
-  ADD CONSTRAINT `imageuploads_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

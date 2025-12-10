@@ -25,7 +25,3 @@ Image and files will get deleted after 3 months of them being alive on flik.host
 ### And yea...
 
 There are some other cool things about flikhost that I cannot be assed explaining but for an 18+ cool time, open the "hentai" page >:)
-
-## Theme
-
-For a limted time, to follow this weeks theme, flikhost will accept images that are only winter themed. This means that any other image that doesn't have a winter feel to it will be rejected!

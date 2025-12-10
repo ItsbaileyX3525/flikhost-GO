@@ -1,0 +1,7 @@
+Available conversions (allow work in reverse)
+
+1. Converting kg to st
+2. Converting gbp to usd
+3. Coverting gbp to btc
+4. Converting inches to cm
+5. Converting feet to meters

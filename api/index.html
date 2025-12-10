@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/assets/css/api.css">
+    <meta name="description" content="Flikhost API landing page.">
+    <meta name="keywords" content="Flikhost, API, landing page, free APIs">
+    <meta name="author" content="Flikhost">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+    <title>API landing page</title>
+</head>
+<style>
+code {
+	background-color:rgb(20, 20, 20);
+	color: rgb(175, 175, 175);
+	padding: 0.2em 0.4em;
+	border-radius: 4px;
+	font-size: 0.95em;
+	white-space: pre-wrap;
+}
+
+</style>
+<body>
+    <div class="centered">
+        <div class="mainBox">
+            <div>
+                <h2>Welcome to the API landing page!</h2>
+                <p>We offer a wide array of free APIs that you can use including:</p>
+            </div>
+            <div id="api-container">
+                <ul>
+                    <li><a href="sheldon">Sheldon Cooper quotes.</a></li>
+                    <li><a href="fantasy_name">Fantasy name generator.</a></li>
+                    <li><a href="joke">Joke API.</a></li>
+                    <li><a href="memify">Adding text to meme images (WIP)</a></li>
+                    <li><a href="zawg">Pictures of zawg.</a></li>
+                    <li><a href="unit_conversion">Unit conversion. </a><a href="available_conversions.txt">See available conversions here</a></li>
+                    <li><a href="fact">Random ass facts.</a></li>
+                    <li><a href="username_availability">Checking if a username is available.</a></li>
+                    <li><a href="qrcode">QR code from a URL</a></li>
+                    <li><a href="uuid">UUID generator</a></li>
+                </ul>
+            </div>
+            <h2>Intergrating our file hosting service to your website</h2>
+            <p>You can allow users to upload images to flikhost from your site by invoking the <a target="_blank" href="https://api.flik.host/api/apiUpload">api.flik.host/api/apiUpload </a>endpoint using an ajax request (or something similar to upload the file)</p>
+            <p>To build a request to the api upload you can run a command like:</p>
+            <code>function uploadImage(){
+    event.preventDefault();
+    let formData = new FormData();
+    //formData.append("imageUpload", image) - The file to be sent (images or files)
+    formData.append("websiteName", "My Website"); // Optional: label where this upload came from
+    formData.append("apiKey", "YOUR_API_KEY_HERE");
+    $.ajax({
+        url: 'https://api.flik.host/api/apiUpload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            try {
+                const result = JSON.parse(response);
+                if (result.success) {
+                    //Image uploaded to database successfully
+                    console.log("File URL:", result.link);
+                } else {
+                    //Something on your end failed with the POST request
+                    console.error("Upload failed:", result.message);
+                }
+            } catch (e) {
+                // Its like 50/50 it was either you or us if this happens
+                console.error("Parse error:", e);
+            }
+        },
+        error: function(xhr, status, error) {
+            //This means there is something wrong with the endpoint and should be reported to help@flik.host
+            console.error("Request error:", error);
+        }
+    });
+}</code>
+<p>For example we upload the users files like this:</p>
+<code>
+    $(document).ready(function() {
+        $('#uploadForm').on('submit', function(event) {
+            event.preventDefault();
+            //Hi welcome to the ajax request!
+            if (!validToken && true) {
+                notify("Invalid captcha!", "error");
+                return;
+            } //If you think that just making this check always true, it also validates it at the backend so dont try it
+
+            let formData = new FormData(this);
+            $.ajax({
+                url: '/includes/upload.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    try {
+                        const result = JSON.parse(response);
+                        if (result.success) {
+                            notify("Image uploaded!", "success");
+                            $('#dropZone').removeClass('filed');
+                            $('#replaceText').hide();
+
+                            $('#link-container').show();
+                            $('#image-link').text(result.link)
+                            $('#copy-button').attr('onclick', `copyText('${result.link}')`);
+                            
+                            $("#preImage").css("display", "none");
+                            $("#preImage").attr("src", "");
+                        } else {
+                            notify(result.message, "error");
+                        }
+                    } catch (e) {
+                        console.error('Invalid JSON response:', response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', error);
+                    alert('An error occurred, please try again.');
+                }
+            });
+            reset_turnstile()
+            $('#imageUpload').val(null);
+        });
+    });
+</code>
+<p>You will need an API key to upload the files to the website so just head on over to the <a href="https://flik.host/home">home page</a> where you can view your API key, you do need to be signed in however to see the API key otherwise it would be unsecure wouldn't it ;P</p>
+    </div>
+</div>
+</body>
+</html>

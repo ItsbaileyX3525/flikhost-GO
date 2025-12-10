@@ -7,7 +7,6 @@
     <link rel="icon" href="/assets/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/assets/css/user.css">
     <link rel="stylesheet" href="/assets/css/notify.css">
-    <script src="/assets/js/notify.js" defer></script>
 </head>
 <body>
     <div class="centered">
@@ -30,6 +29,11 @@
                     <div class="infoContainer">
                         <p>Email: </p>
                         <input type="text" disabled id="infoEmail" value="Loading...">
+                    </div>
+                    <div class="infoContainer">
+                        <p>API Key: </p>
+                        <input type="text" disabled id="infoApiKey" value="Loading..." style="font-family: monospace;">
+                        <button onclick="copyApiKey()" style="margin-left: 10px; padding: 5px 10px; cursor: pointer;">Copy</button>
                     </div>
                     <div class="infoContainer">
                         <p>Account created: </p>

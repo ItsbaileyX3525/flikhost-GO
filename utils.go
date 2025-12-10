@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -201,7 +202,15 @@ func checkTurnstile(token string) (bool, string) {
 func serveHTML(router *gin.Engine) {
 	router.NoRoute(func(c *gin.Context) {
 		if c.Request.Method == "GET" {
-			var path string = filepath.Join("./public", c.Request.URL.Path)
+			var baseDir string = "./public"
+
+			log.Print(strings.Split(c.Request.Host, ".")[0])
+
+			if (strings.Split(c.Request.Host, ".")[0]) == "api" {
+				baseDir = "./api"
+			}
+
+			var path string = filepath.Join(baseDir, c.Request.URL.Path)
 			var info os.FileInfo
 			var pathError error
 			if info, pathError = os.Stat(path); pathError == nil && !info.IsDir() {
