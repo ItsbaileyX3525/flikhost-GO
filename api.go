@@ -151,7 +151,6 @@ func createEndpoints(router *gin.Engine) {
 
 			var sessionID string = ""
 			sessionID, _ = c.Cookie("session_id")
-			log.Printf("Session ID: %s", sessionID)
 
 			var userID interface{}
 			if sessionID != "" {
@@ -162,8 +161,9 @@ func createEndpoints(router *gin.Engine) {
 				).Row()
 
 				if scanErr = row.Scan(&userID); scanErr != nil {
-					c.JSON(200, gin.H{"status": "error", "message": "Session not found, login"})
-					return
+
+					//c.JSON(200, gin.H{"status": "error", "message": "Session not found, login"})
+					//return
 				}
 
 			} else {
