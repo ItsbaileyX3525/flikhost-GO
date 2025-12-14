@@ -250,7 +250,6 @@ a {
 	margin: 0;
 }
 
-
 .link-container button {
 	flex: 1 1 auto;
 	height: 3.5rem;
@@ -275,6 +274,15 @@ a {
 	border-radius: 8px;
 	font-size: 0.9375rem;
 	color: #FFF;
+}
+
+.anime-girl-image {
+    max-width: 200px;
+    max-height: 400px;
+	position: fixed;
+	bottom: 0;
+    right: 0;
+    cursor: pointer;
 }
 
 /* Tablet & below: stack rows vertically */
