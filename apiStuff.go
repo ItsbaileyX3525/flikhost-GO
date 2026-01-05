@@ -45,9 +45,7 @@ type SiteComment struct {
 	UpdatedAt   time.Time
 }
 
-// Initialize visitor tracking database
 func initVisitorDB() *gorm.DB {
-	// Use separate database for visitor tracking
 	dbUser := os.Getenv("DBUSER")
 	dbPass := os.Getenv("DBPASS")
 	dbHost := "localhost"
@@ -393,7 +391,7 @@ func zawgAPI(c *gin.Context) {
 
 	html := fmt.Sprintf(`<title>Zawg API</title>
 <body style='margin: 0px; height: 100%%; background-color: rgb(14, 14, 14);'>
-<img style='display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%%, 90%%);transition: background-color 300ms;' src='%s' alt='Random Image' />
+<img loading="lazy" style='display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%%, 90%%);transition: background-color 300ms;' src='%s' alt='Random Image' />
 </body>`, imageURL)
 
 	c.Header("Content-Type", "text/html")
@@ -415,7 +413,7 @@ func adamCairnsAPI(c *gin.Context) {
 
 	html := fmt.Sprintf(`<title>Adam API</title>
 <body style='margin: 0px; height: 100%%; background-color: rgb(14, 14, 14);'>
-<img style='display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%%, 90%%);transition: background-color 300ms;' src='%s' alt='Random Image' />
+<img loading="lazy" style='display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%%, 90%%);transition: background-color 300ms;' src='%s' alt='Random Image' />
 </body>`, imageURL)
 
 	c.Header("Content-Type", "text/html")
@@ -440,7 +438,7 @@ func elotAPI(c *gin.Context) {
 
 	html := fmt.Sprintf(`<title>Elot API</title>
 <body style='margin: 0px; height: 100%%; background-color: rgb(14, 14, 14);'>
-<img style='display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%%, 90%%);transition: background-color 300ms;' src='%s' alt='Random Image' />
+<img loading="lazy" style='display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%%, 90%%);transition: background-color 300ms;' src='%s' alt='Random Image' />
 </body>`, imageURL)
 
 	c.Header("Content-Type", "text/html")

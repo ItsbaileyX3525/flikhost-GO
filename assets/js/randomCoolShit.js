@@ -11,6 +11,8 @@ function mlgMode() {
     mlgGif.src = "https://flik.host/images/QrURN.gif"
     mlgGif.id = "mlgGif"
     document.body.appendChild(mlgGif)
+    // Load audio only when needed
+    if (!mlgAudio.src) mlgAudio.src = "/assets/sounds/mlg.mp3"
     mlgAudio.volume = .1
     mlgAudio.play()
     setTimeout(() => {
@@ -42,6 +44,8 @@ document.addEventListener("keypress", (e) => {
         keystrokes = []
         return
     }
+    if (keystrokes.length > 15) {
+        keystrokes = []
+    }
     keystrokes.push(e.key)
-    console.log(keystrokes)
 })

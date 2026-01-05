@@ -1,0 +1,1 @@
+function notify(e,t="info",n=2200){const i=document.getElementById("notif-container"),o=document.createElement("div");o.classList.add("notification",t),o.innerText=e,i.appendChild(o),setTimeout((()=>{o.style.animation="fadeOut 0.3s ease forwards",setTimeout((()=>o.remove()),300)}),n)}

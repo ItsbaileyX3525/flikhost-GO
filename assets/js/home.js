@@ -45,7 +45,7 @@ function renderImages(images) {
         
         postDiv.innerHTML = 
             '<div class="imageContainer">' +
-                '<img src="' + escapeHtml(image.path) + '" alt="' + escapeHtml(image.name) + '">' +
+                '<img loading="lazy" src="' + escapeHtml(image.path) + '" alt="' + escapeHtml(image.name) + '">' +
             '</div>' +
             '<div class="controlContainer">' +
                 '<button onclick="copyText(\'' + escapeHtml(copy) + '\')">Copy Link</button>' +

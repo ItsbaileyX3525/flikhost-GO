@@ -7,7 +7,6 @@
 
     <link rel="stylesheet" href="/assets/css/upload.css">
     <link rel="icon" href="/assets/images/favicon.png" type="image/png">
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script src="/assets/js/notify.js" defer></script>
     <link rel="stylesheet" href="/assets/css/notify.css">
 </head>
@@ -37,7 +36,7 @@
                 <div>
                     <div id="dropZone" class="dropZone">
                         <p>Drop an image or click here!</p>
-                        <img src="" alt="" id="preImage" style="object-fit: contain; width: 100%; height: 100%; display: none;">
+                        <img loading="lazy" src="" alt="" id="preImage" style="object-fit: contain; width: 100%; height: 100%; display: none;">
                     </div>
                     <p id="replaceText" style="display: none;">Drag or click to change the image again</p>
                 </div>
@@ -63,8 +62,8 @@
             </div>
     </div>
     <div id="response"></div>
-    <img class="anime-girl-image" src="/assets/images/animegirls/animegirl1.png" alt="">
-    <audio id="mlg" src="/assets/sounds/mlg.mp3"></audio>
+    <img loading="lazy" class="anime-girl-image" src="/assets/images/animegirls/animegirl1.webp" alt="">
+    <audio id="mlg" preload="none"></audio>
     <script src="/assets/js/imageUpload.js"></script>
     <script src="/assets/js/animegirls.js"></script>
     <script src="/assets/js/randomCoolShit.js"></script>

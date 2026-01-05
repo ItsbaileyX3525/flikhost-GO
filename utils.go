@@ -15,10 +15,18 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+)
+
+var (
+	dbInstance *gorm.DB
+	dbOnce     sync.Once
+	dbInitErr  error
 )
 
 const base62Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -174,14 +182,24 @@ func storeFileFromHeader(file *multipart.FileHeader) (bool, string) {
 }
 
 func connectDB() (*gorm.DB, error) {
-	var dsn string = fmt.Sprintf("%s:%s@tcp(localhost:3306)/%s?charset=utf8mb4&parseTime=True&loc=UTC", dbUser, dbPass, dbName)
-	var db *gorm.DB
-	var err error
-	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+	dbOnce.Do(func() {
+		var dsn string = fmt.Sprintf("%s:%s@tcp(localhost:3306)/%s?charset=utf8mb4&parseTime=True&loc=UTC", dbUser, dbPass, dbName)
+		dbInstance, dbInitErr = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if dbInitErr != nil {
+			return
+		}
+		// Configure connection pool
+		sqlDB, err := dbInstance.DB()
+		if err != nil {
+			dbInitErr = err
+			return
+		}
+		sqlDB.SetMaxIdleConns(10)                 // Keep 10 idle connections
+		sqlDB.SetMaxOpenConns(25)                 // Max 25 concurrent connections
+		sqlDB.SetConnMaxLifetime(5 * time.Minute) // Recycle connections after 5 min
+		log.Print("Database connection pool initialized")
+	})
+	return dbInstance, dbInitErr
 }
 
 func checkTurnstile(token string) (bool, string) {
@@ -210,9 +228,28 @@ func serveHTML(router *gin.Engine) {
 				baseDir = "./api"
 			}
 
+			if filepath.Ext(c.Request.URL.Path) != "" && filepath.Ext(c.Request.URL.Path) != ".html" {
+				//files
+				var path string = filepath.Join("./", c.Request.URL.Path)
+				if useMinified {
+					path = strings.Replace(path, "js", "js/min", 1)
+					path = strings.Replace(path, "css", "css/min", 1)
+				}
+				log.Printf("File path: %s", path)
+				var info os.FileInfo
+				var pathError error
+				if info, pathError = os.Stat(path); pathError == nil && !info.IsDir() {
+					c.File(path)
+					return
+				}
+				log.Print(pathError)
+				return
+			}
+
 			var path string = filepath.Join(baseDir, c.Request.URL.Path)
 			var info os.FileInfo
 			var pathError error
+
 			if info, pathError = os.Stat(path); pathError == nil && !info.IsDir() {
 				c.File(path)
 				return

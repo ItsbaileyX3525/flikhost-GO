@@ -126,7 +126,7 @@ a {
 }
 
 .leftBox {
-    background: #5a5398 url('/assets/images/purple-mojave.jpg') center/cover no-repeat;
+    background: #5a5398 url('/assets/images/purple-webp.jpg') center/cover no-repeat;
     display: flex;
     align-items: flex-end;
     position: relative;

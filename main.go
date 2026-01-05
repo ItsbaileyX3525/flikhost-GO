@@ -19,6 +19,7 @@ var validationKey string
 var websiteURL string
 var cookieSeure bool
 var secretTurnstileToken string
+var useMinified bool = false
 
 func checkSSL() (string, string) {
 	certPath := filepath.Join("ssl", "cert.pem")
@@ -53,11 +54,16 @@ func main() {
 	if boolParseError != nil {
 		log.Fatal("Secure method not found")
 	}
+	var useMinifiedString string = os.Getenv("USEMINIFIED")
+	useMinified, boolParseError = strconv.ParseBool(useMinifiedString)
+	if boolParseError != nil {
+		log.Print("Usage of minified not specified")
+	}
 
 	// Initialize visitor tracking database
 	visitorDB := initVisitorDB()
 
-	//gin.SetMode(gin.ReleaseMode) //Uncomment in prod
+	gin.SetMode(gin.ReleaseMode) //Uncomment in prod
 	var router *gin.Engine = gin.Default()
 
 	router.Use(func(c *gin.Context) {
@@ -80,7 +86,7 @@ func main() {
 
 	registerAPIRoutes(router, visitorDB)
 
-	router.Static("/assets", "./assets")
+	//router.Static("/assets", "./assets")
 
 	serveHTML(router)
 

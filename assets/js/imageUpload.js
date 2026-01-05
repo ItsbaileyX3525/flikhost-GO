@@ -33,8 +33,7 @@ function checkSession() {
             } else {
                 if (accountSection) accountSection.style.display = 'none';
                 if (createAccText) createAccText.style.display = 'block';
-                if (turnstileContainer) turnstileContainer.style.display = 'block';
-                setTimeout(initTurnstile, 100);
+                // Turnstile will load when image is selected
             }
         })
         .catch(function(error) {
@@ -42,8 +41,20 @@ function checkSession() {
             var createAccText = document.getElementById('createAccText');
             if (accountSection) accountSection.style.display = 'none';
             if (createAccText) createAccText.style.display = 'block';
-            setTimeout(initTurnstile, 100);
         });
+}
+
+function loadTurnstileScript() {
+    if (window.turnstile || document.getElementById('turnstile-script')) {
+        setTimeout(initTurnstile, 100);
+        return;
+    }
+    var script = document.createElement('script');
+    script.id = 'turnstile-script';
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.onload = function() { setTimeout(initTurnstile, 100); };
+    document.head.appendChild(script);
 }
 
 function initTurnstile() {
@@ -102,6 +113,13 @@ imageUpload.addEventListener('change', function(event) {
         notify('Not an image!', 'error');
         imageUpload.value = '';
         return;
+    }
+    
+    // Load Turnstile when image is selected (only for non-logged-in users)
+    if (!isLoggedIn) {
+        var turnstileContainer = document.getElementById('turnstile-container');
+        if (turnstileContainer) turnstileContainer.style.display = 'block';
+        loadTurnstileScript();
     }
     
     var reader = new FileReader();
